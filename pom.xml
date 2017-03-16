@@ -34,7 +34,13 @@
         <artifactId>config</artifactId>
         <version>1.2.1</version>
     </dependency>
-
+    <dependency>
+      <groupId>JPigpio</groupId>
+      <artifactId>JPgpio</artifactId>
+      <version>1.0.0</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/lib/jpigpio-1.0.0-SNAPSHOT.jar</systemPath>
+    </dependency>
 
     <!-- Test -->
     <dependency>
