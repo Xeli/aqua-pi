@@ -1,5 +1,6 @@
 package eu.xeli.aquariumPI
 
+import gpio.{Server, Listener}
 import eu.xeli.aquariumPI._
 import com.typesafe.config._
 
@@ -8,19 +9,16 @@ import com.typesafe.config._
  */
 object App {
 
-  def foo(x : Array[String]) = x.foldLeft("")((a,b) => a + b)
-
   def main(args : Array[String]) {
     println("Starting up")
 
     val conf = getConfig()
+    val server = new Server(conf.getString("server.host"), conf.getInt("server.port"))
 
     //Ato setup
     val waterLevelSensor = conf.getInt("gpio.ato.waterlevel")
     val atoPump = conf.getInt("gpio.ato.pump")
-    val ato = new Ato(waterLevelSensor, atoPump)
-
-    ato()
+    val ato = new Ato(server, waterLevelSensor, atoPump)
   }
 
   def getConfig(): Config = {

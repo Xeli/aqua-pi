@@ -1,22 +1,17 @@
 package eu.xeli.aquariumPI
 
-import eu.xeli.aquariumPI.Relay
-import eu.xeli.aquariumPI.sensors.WaterLevel
+import gpio.{Relay, Server, Listener}
 
-class Ato(waterLevelSensorPin: Int, pumpPin: Int) {
+class Ato(server: Server, waterLevelSensorPin: Int, pumpPin: Int) {
   val criticalWaterLevel = 0
 
-  val pump = new Relay(pumpPin)
-  val sensor = new WaterLevel(waterLevelSensorPin)
+  val pump = new Relay(server, pumpPin)
+  val listener = new Listener(server, waterLevelSensorPin, handleChange)
 
-  def apply() {
-    val waterLevel = sensor.getValue()
-
-    if (waterLevel < criticalWaterLevel) {
+  def handleChange = (level: Double) => {
+    if (level > 0) {
       pump.enable()
-      while (sensor.getValue() < criticalWaterLevel) {
-        Thread.sleep(5000)
-      }
+    } else {
       pump.disable()
     }
   }
