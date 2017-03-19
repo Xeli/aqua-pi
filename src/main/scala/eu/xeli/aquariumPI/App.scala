@@ -19,6 +19,13 @@ object App {
     val waterLevelSensor = conf.getInt("gpio.ato.waterlevel")
     val atoPump = conf.getInt("gpio.ato.pump")
     val ato = new Ato(server, waterLevelSensor, atoPump)
+
+    //TODO get from config file
+    val bluesData:List[(String, Double)] = List(("09:00", 1), ("12:00", 50), ("18:00", 80), ("21:00", 30), ("23:59", 1))
+    val whitesData:List[(String, Double)] = List(("09:00", 1), ("12:00", 50), ("18:00", 80), ("21:00", 30), ("23:59", 1))
+    val blues = new LightCalculation(bluesData)
+    val whites = new LightCalculation(whitesData)
+    val light = new Light(blues, whites)
   }
 
   def getConfig(): Config = {
