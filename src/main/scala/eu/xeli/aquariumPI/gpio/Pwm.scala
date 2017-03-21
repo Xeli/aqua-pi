@@ -2,7 +2,7 @@ package eu.xeli.aquariumPI.gpio
 
 import jpigpio.JPigpio
 
-class PWM(server: Server, pin: Int) {
+class Pwm(server: Server, pin: Int) {
   val pigpio = Pigpio.getInstance(server)
 
   pigpio.gpioSetMode(pin, JPigpio.PI_OUTPUT)
