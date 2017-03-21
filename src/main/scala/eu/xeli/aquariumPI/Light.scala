@@ -21,7 +21,8 @@ class Light(server: Server,
   val whitePWMs = whitePins.map(new Pwm(server, _))
 
   def run() {
-    val time = LocalTime.now()
+    val zone = ZoneId.of("Europe/Amsterdam")
+    val time = LocalTime.now(zone)
 
     val blueValue = blue.getValue(time)
     val whiteValue = white.getValue(time)
