@@ -1,6 +1,7 @@
 package eu.xeli.aquariumPI
 
 import gpio._
+import gpio.Pwm
 import java.time._
 
 /*
@@ -12,16 +13,21 @@ import java.time._
  * blue will be used as moonlight
  *
  */
-class Light(bluePins: List[Int], whitePins: List[Int], blue: LightCalculation, white: LightCalculation) {
+class Light(server: Server,
+            bluePins: List[Int], whitePins: List[Int],
+            blue: LightCalculation, white: LightCalculation) extends Runnable {
 
-  val bluePWMs = bluePins.map(PWM)
-  val whitePWMs = whitePins.map(PWM)
+  val bluePWMs = bluePins.map(new Pwm(server, _))
+  val whitePWMs = whitePins.map(new Pwm(server, _))
 
-  def updateValues(time: LocalTime) {
+  def run() {
+    val time = LocalTime.now()
+
     val blueValue = blue.getValue(time)
     val whiteValue = white.getValue(time)
 
     bluePWMs.map(_.set(blueValue))
-    whitePWMs.map(_.set(blueValue))
+    whitePWMs.map(_.set(whiteValue))
+    println("updating lights: (" + blueValue + "," + whiteValue + ")")
   }
 }

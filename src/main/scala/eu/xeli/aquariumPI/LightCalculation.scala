@@ -48,6 +48,4 @@ class LightCalculation(pattern: List[(String, Double)]) {
   }
 
   val sections:List[Section] = convert(pattern)
-
-  print(getValue(LocalTime.now()))
 }
