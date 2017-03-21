@@ -32,8 +32,8 @@ object App {
 
   def setupLight(server: Server, conf: Config): Light = {
     //TODO get blues/whites from config file
-    val bluesData:List[(String, Double)] = List(("00:30", 0), ("08:30", 0), ("11:00", 80), ("17:30", 80), ("22:00", 1), ("23:00", 0))
-    val whitesData:List[(String, Double)] = List(("00:30", 0), ("08:30", 0), ("11:00", 80), ("17:30", 85), ("22:00", 10), ("23:00", 0))
+    val bluesData:List[(String, Double)] = List(("00:30", 0), ("08:30", 0), ("11:00", 80), ("17:30", 50), ("22:00", 3), ("23:00", 3))
+    val whitesData:List[(String, Double)] = List(("00:30", 0), ("08:30", 0), ("11:00", 80), ("17:30", 40), ("22:00", 1), ("23:00", 0))
 
     val blues = new LightCalculation(bluesData)
     val whites = new LightCalculation(whitesData)
