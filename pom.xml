@@ -42,9 +42,9 @@
         <version>1.2.1</version>
     </dependency>
     <dependency>
-      <groupId>JPigpio</groupId>
-      <artifactId>JPgpio</artifactId>
-      <version>1.0.0</version>
+      <groupId>jpigpio</groupId>
+      <artifactId>jpigpio</artifactId>
+      <version>1.0.1</version>
     </dependency>
     <!-- Test -->
     <dependency>
