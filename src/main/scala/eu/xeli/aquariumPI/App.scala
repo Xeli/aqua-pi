@@ -2,6 +2,7 @@ package eu.xeli.aquariumPI
 
 import gpio.Listener
 import eu.xeli.aquariumPI._
+import eu.xeli.aquariumPI.light.{Light, LightCalculation}
 import com.typesafe.config._
 import java.util.concurrent._
 
@@ -18,10 +19,16 @@ object App {
 
     //ato has a listener, so it doesn't need a loop but acts event based
     val ato = setupATO(servers, conf)
-    val light = setupLight(servers, conf)
 
+    //adjust light every 30 seconds
+    val light = setupLight(servers, conf)
     val executor = new ScheduledThreadPoolExecutor(1)
     executor.scheduleAtFixedRate(light, 0, 30, TimeUnit.SECONDS)
+
+    //send metrics to kafka every 5 seconds
+    val gatherMetrics = new GatherMetrics(servers, light, ato)
+    val metricExecutor = new ScheduledThreadPoolExecutor(1)
+    executor.scheduleAtFixedRate(gatherMetrics, 0, 5, TimeUnit.SECONDS)
   }
 
   def setupATO(servers: Servers, conf: Config): Ato = {

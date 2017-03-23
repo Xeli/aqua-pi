@@ -46,6 +46,12 @@
       <artifactId>jpigpio</artifactId>
       <version>1.0.1</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka_2.10 -->
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.11</artifactId>
+      <version>0.10.2.0</version>
+    </dependency>
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
