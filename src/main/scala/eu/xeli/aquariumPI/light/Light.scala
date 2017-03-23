@@ -1,7 +1,7 @@
-package eu.xeli.aquariumPI
+package eu.xeli.aquariumPI.light
 
-import gpio._
-import gpio.Pwm
+import eu.xeli.aquariumPI.gpio._
+import eu.xeli.aquariumPI.Servers
 import java.time._
 
 /*
@@ -17,6 +17,8 @@ class Light(servers: Servers,
             bluePins: List[Int], whitePins: List[Int],
             blue: LightCalculation, white: LightCalculation) extends Runnable {
 
+  var lastValue = LightMetric(0,0)
+
   val bluePWMs = bluePins.map(new Pwm(servers.pigpio, _))
   val whitePWMs = whitePins.map(new Pwm(servers.pigpio, _))
 
@@ -30,6 +32,8 @@ class Light(servers: Servers,
     //send to pigpio
     bluePWMs.map(_.set(blueValue))
     whitePWMs.map(_.set(whiteValue))
+
+    lastValue = LightMetric(blueValue, whiteValue)
 
     println("updating lights: (" + blueValue + "," + whiteValue + ")")
   }

@@ -1,4 +1,4 @@
-package eu.xeli.aquariumPI
+package eu.xeli.aquariumPI.light
 
 import java.time._
 import java.time.temporal.ChronoUnit
