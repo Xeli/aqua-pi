@@ -13,12 +13,12 @@ import java.time._
  * blue will be used as moonlight
  *
  */
-class Light(server: Server,
+class Light(servers: Servers,
             bluePins: List[Int], whitePins: List[Int],
             blue: LightCalculation, white: LightCalculation) extends Runnable {
 
-  val bluePWMs = bluePins.map(new Pwm(server, _))
-  val whitePWMs = whitePins.map(new Pwm(server, _))
+  val bluePWMs = bluePins.map(new Pwm(servers.pigpio, _))
+  val whitePWMs = whitePins.map(new Pwm(servers.pigpio, _))
 
   def run() {
     val zone = ZoneId.of("Europe/Amsterdam")
@@ -27,8 +27,10 @@ class Light(server: Server,
     val blueValue = blue.getValue(time)
     val whiteValue = white.getValue(time)
 
+    //send to pigpio
     bluePWMs.map(_.set(blueValue))
     whitePWMs.map(_.set(whiteValue))
+
     println("updating lights: (" + blueValue + "," + whiteValue + ")")
   }
 }

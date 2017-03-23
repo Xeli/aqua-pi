@@ -1,5 +1,6 @@
 package eu.xeli.aquariumPI.gpio
 
+import eu.xeli.aquariumPI.Server
 import jpigpio.{Alert, JPigpio}
 import java.time.Duration
 import java.time.temporal.ChronoUnit

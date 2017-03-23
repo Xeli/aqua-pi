@@ -1,5 +1,6 @@
 package eu.xeli.aquariumPI.gpio
 
+import eu.xeli.aquariumPI.Server
 import jpigpio.JPigpio
 
 class Pwm(server: Server, pin: Int) {

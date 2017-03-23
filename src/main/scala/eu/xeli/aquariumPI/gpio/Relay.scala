@@ -1,6 +1,7 @@
 package eu.xeli.aquariumPI.gpio
 
 import eu.xeli.aquariumPI.gpio._
+import eu.xeli.aquariumPI.Server
 import jpigpio._
 
 class Relay(server: Server, pin: Int, hasInverseHardware: Boolean = false) {
