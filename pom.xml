@@ -52,6 +52,11 @@
       <artifactId>kafka_2.11</artifactId>
       <version>0.10.2.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>1.8.1</version>
+    </dependency>
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
@@ -84,6 +89,19 @@
     <testSourceDirectory>src/test/scala</testSourceDirectory>
     <plugins>
       <plugin>
+          <groupId>at.makubi.maven.plugin</groupId>
+          <artifactId>avrohugger-maven-plugin_2.11</artifactId>
+          <version>1.2</version>
+          <executions>
+              <execution>
+                  <phase>generate-sources</phase>
+                  <goals>
+                      <goal>generate-scala-sources</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
+      <plugin>
         <!-- see http://davidb.github.com/scala-maven-plugin -->
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
@@ -100,6 +118,16 @@
           </launchers>
         </configuration>
         <executions>
+          <execution>
+              <id>add-generated-sources</id>
+              <phase>generate-sources</phase>
+              <goals>
+                  <goal>add-source</goal>
+              </goals>
+              <configuration>
+                  <sourceDir>${project.build.directory}/generated-sources/avro</sourceDir>
+              </configuration>
+          </execution>
           <execution>
             <goals>
               <goal>compile</goal>

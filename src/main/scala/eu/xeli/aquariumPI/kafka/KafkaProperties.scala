@@ -10,7 +10,7 @@ object KafkaProperties {
     properties.put("bootstrap.servers", kafka.host + ":" + kafka.port)
     properties.put("client.id", "AquaPI")
     properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-    properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+    properties.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
     properties
   }
 }
