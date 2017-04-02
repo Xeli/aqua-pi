@@ -1,8 +1,9 @@
 package eu.xeli.aquariumPI
 
-import gpio.Listener
+import gpio.{Listener, PwmGroup}
 import eu.xeli.aquariumPI._
-import eu.xeli.aquariumPI.light.{Light, LightCalculation}
+import eu.xeli.aquariumPI.light.LightCalculation
+import eu.xeli.aquariumPI.light.LightCalculation._
 import com.typesafe.config._
 import java.util.concurrent._
 
@@ -21,14 +22,15 @@ object App {
     val ato = setupATO(servers, conf)
 
     //adjust light every 30 seconds
-    val light = setupLight(servers, conf)
+    val (blues, whites) = setupLight(servers, conf)
+    //val light = setupLight(servers, conf)
     val executor = new ScheduledThreadPoolExecutor(1)
-    executor.scheduleAtFixedRate(light, 0, 30, TimeUnit.SECONDS)
+    //executor.scheduleAtFixedRate(light, 0, 30, TimeUnit.SECONDS)
 
     //send metrics to kafka every 5 seconds
-    val gatherMetrics = new GatherMetrics(servers, light, ato)
-    val metricExecutor = new ScheduledThreadPoolExecutor(1)
-    executor.scheduleAtFixedRate(gatherMetrics, 0, 5, TimeUnit.SECONDS)
+    //val gatherMetrics = new GatherMetrics(servers, ???, ato)
+    //val metricExecutor = new ScheduledThreadPoolExecutor(1)
+    //executor.scheduleAtFixedRate(gatherMetrics, 0, 5, TimeUnit.SECONDS)
   }
 
   def setupATO(servers: Servers, conf: Config): Ato = {
@@ -37,16 +39,23 @@ object App {
     new Ato(servers, waterLevelSensor, atoPump)
   }
 
-  def setupLight(servers: Servers, conf: Config): Light = {
+  def setupLight(servers: Servers, conf: Config): (Controller, Controller) = {
     //TODO get blues/whites from config file
     val bluesData:List[(String, Double)] = List(("00:30", 0), ("08:30", 0), ("11:00", 80), ("17:30", 50), ("22:00", 3), ("23:00", 3))
     val whitesData:List[(String, Double)] = List(("00:30", 0), ("08:30", 0), ("11:00", 80), ("17:30", 40), ("22:00", 1), ("23:00", 0))
 
-    val blues = new LightCalculation(bluesData)
-    val whites = new LightCalculation(whitesData)
-    val bluePins = List(22,24)
-    val whitePins = List(14,25)
-    new Light(servers, bluePins, whitePins, blues, whites)
+    val blues = setupLightChannel(servers, List(22,24), bluesData)
+    val whites = setupLightChannel(servers, List(14,25), whitesData)
+    (blues, whites)
+  }
+
+  def setupLightChannel(servers: Servers, pins: List[Int], pattern: LightPattern): Controller = {
+    val sunset = new LightCalculation(1, pattern)
+    val pwms = new PwmGroup(servers.pigpio, pins)
+
+    val controller = new Controller(3, pwms)
+    controller.addControllee(sunset)
+    controller
   }
 
   def getConfig(): Config = {

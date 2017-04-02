@@ -2,6 +2,8 @@ package eu.xeli.aquariumPI.light
 
 import java.time._
 import java.time.temporal.ChronoUnit
+import eu.xeli.aquariumPI.Controllee
+import LightCalculation._
 
 /*
  *
@@ -14,7 +16,7 @@ import java.time.temporal.ChronoUnit
  * If you ask for the light intensity at 9 o'clock it would give back 50%
  *
  */
-class LightCalculation(pattern: List[(String, Double)]) {
+class LightCalculation(priority: Int, pattern: LightPattern) extends Controllee(priority) {
   case class Moment(time: LocalTime, value: Double)
   case class Section(from: Moment, to: Moment) {
     val durationInSeconds = from.time.until(to.time, ChronoUnit.SECONDS)
@@ -31,13 +33,16 @@ class LightCalculation(pattern: List[(String, Double)]) {
   }
 
   //Convert a list of time and led intensity into List of sections
-  def convert(data: List[(String, Double)]): List[Section] = {
+  def convert(data: LightPattern): List[Section] = {
     val moments = data.map({ case (time, value) => Moment(LocalTime.parse(time), value) })
     val momentTuples = moments zip moments.tail
     momentTuples.map({ case (x,y) => Section(x,y)})
   }
 
-  def getValue(time: LocalTime): Double = {
+  def getValue(): Double = {
+    val zone = ZoneId.of("Europe/Amsterdam")
+    val time = LocalTime.now(zone)
+
     val maybeSection = sections.find(_.intersects(time))
     maybeSection match {
       case Some(section) =>
@@ -47,5 +52,13 @@ class LightCalculation(pattern: List[(String, Double)]) {
     }
   }
 
+  def getFrequency(): Int = {
+    5
+  }
+
   val sections:List[Section] = convert(pattern)
+}
+
+object LightCalculation {
+  type LightPattern = List[(String, Double)]
 }

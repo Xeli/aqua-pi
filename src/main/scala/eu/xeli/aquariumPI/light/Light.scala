@@ -23,11 +23,8 @@ class Light(servers: Servers,
   val whitePWMs = whitePins.map(new Pwm(servers.pigpio, _))
 
   def run() {
-    val zone = ZoneId.of("Europe/Amsterdam")
-    val time = LocalTime.now(zone)
-
-    val blueValue = blue.getValue(time)
-    val whiteValue = white.getValue(time)
+    val blueValue = blue.getValue()
+    val whiteValue = white.getValue()
 
     //send to pigpio
     bluePWMs.map(_.set(blueValue))
