@@ -14,4 +14,9 @@ class Pwm(server: Server, pin: Int) {
     val dutycycle = Math.round(250 * (percentage / 100.0)).toInt
     pigpio.setPWMDutycycle(pin, dutycycle)
   }
+
+  def getValue(): Double = {
+    val dutycycle = pigpio.getPWMDutycycle(pin)
+    (dutycycle / 250.0) * 100.0
+  }
 }
