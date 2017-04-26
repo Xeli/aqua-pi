@@ -112,7 +112,7 @@
               <id>App</id>
               <mainClass>eu.xeli.aquariumPI.App</mainClass>
               <args>
-                <arg></arg>
+                <arg>/home/richard/SoftDev/AquariumPI/config</arg>
               </args>
             </launcher>
           </launchers>
@@ -135,6 +135,7 @@
             </goals>
             <configuration>
               <args>
+                <arg>-feature</arg>
                 <arg>-dependencyfile</arg>
                 <arg>${project.build.directory}/.scala_dependencies</arg>
               </args>

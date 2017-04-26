@@ -16,7 +16,9 @@ import LightCalculation._
  * If you ask for the light intensity at 9 o'clock it would give back 50%
  *
  */
-class LightCalculation(priority: Int, pattern: LightPattern) extends Controllee(priority) {
+class LightCalculation(priority: Int, var initialPattern: LightPattern) extends Controllee(priority) {
+  var sections:Seq[Section] = Seq()
+
   case class Moment(time: LocalTime, value: Double)
   case class Section(from: Moment, to: Moment) {
     val durationInSeconds = from.time.until(to.time, ChronoUnit.SECONDS)
@@ -33,7 +35,7 @@ class LightCalculation(priority: Int, pattern: LightPattern) extends Controllee(
   }
 
   //Convert a list of time and led intensity into List of sections
-  def convert(data: LightPattern): List[Section] = {
+  def convert(data: LightPattern): Seq[Section] = {
     val moments = data.map({ case (time, value) => Moment(LocalTime.parse(time), value) })
     val momentTuples = moments zip moments.tail
     momentTuples.map({ case (x,y) => Section(x,y)})
@@ -56,9 +58,13 @@ class LightCalculation(priority: Int, pattern: LightPattern) extends Controllee(
     5
   }
 
-  val sections:List[Section] = convert(pattern)
+  def setSections(pattern: LightPattern) {
+    sections = convert(pattern)
+  }
+
+  setSections(initialPattern)
 }
 
 object LightCalculation {
-  type LightPattern = List[(String, Double)]
+  type LightPattern = Seq[(String, Double)]
 }

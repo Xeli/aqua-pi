@@ -21,11 +21,11 @@ import java.util.concurrent._
  *    instead of going from 12% to 90%, it will go from 12% - 38% - 64% - 90% in several seconds.
  *    the actual step size can be given as parameter in the constructor
  */
-class Controller(maximumStepSize: Double, output: Output) extends Runnable {
+class Controller(maxOffset: Double, secondsToTransition: Int, output: Output) extends Runnable {
   val controllees = PriorityQueue[Controllee]()
 
   @volatile
-  var currentValue:Double = 0.0
+  var currentValue:Double = output.getValue()
 
   @volatile
   var updateFrequency = 5
@@ -34,15 +34,25 @@ class Controller(maximumStepSize: Double, output: Output) extends Runnable {
   @volatile
   var future = executor.scheduleAtFixedRate(this, updateFrequency, updateFrequency, TimeUnit.SECONDS)
 
+  var easing = false
+  var startTime:Long = 0
+  var startValue:Double = 0
+  var endValue:Double = 0
+
+  def changeUpdateFrequency(period: Int, unit: TimeUnit) {
+      future.cancel(true)
+      future = executor.scheduleAtFixedRate(this, 0, period, unit)
+      updateFrequency = period
+  }
+
+  def resetUpdateFrequency() {
+    val smallestFrequency = controllees.map(_.getFrequency()).min
+    changeUpdateFrequency(smallestFrequency, TimeUnit.SECONDS)
+  }
+
   def addControllee(controllee: Controllee) {
     controllees.enqueue(controllee)
-    val oldFrequency = updateFrequency
-    updateFrequency = Math.min(updateFrequency, controllee.getFrequency())
-
-    if(oldFrequency != updateFrequency) {
-      future.cancel(true)
-      future = executor.scheduleAtFixedRate(this, 0, updateFrequency, TimeUnit.SECONDS)
-    }
+    resetUpdateFrequency()
   }
 
   def getCurrentTarget(): Double = {
@@ -53,19 +63,39 @@ class Controller(maximumStepSize: Double, output: Output) extends Runnable {
   }
 
   def run() {
-    print("Current target: " + getCurrentTarget() + " => ")
     val delta = getCurrentTarget() - currentValue
 
-    //if the change is within the threshold, just change to it
-    //otherwise change it with maxmimumStepSize sized steps over time
-    setValue(currentValue + Math.min(delta, maximumStepSize))
+    if (Math.abs(delta) < maxOffset) {
+      setValue(currentValue + delta)
+      easing = false
+      return
+    }
+
+    if(!easing) {
+      easing = true
+      startTime = System.currentTimeMillis()
+      startValue = currentValue
+      endValue = getCurrentTarget()
+      changeUpdateFrequency(200, TimeUnit.MILLISECONDS)
+    }
+
+    setValue(getEasingValue())
+    if(currentValue == endValue) {
+      easing = false
+      resetUpdateFrequency()
+    }
+  }
+
+  def getEasingValue():Double = {
+    val unixTime = System.currentTimeMillis()
+    val percentage = (unixTime - startTime) / (secondsToTransition * 1000.0)
+    startValue + ((endValue - startValue) * Math.min(percentage, 1))
   }
 
   def setValue(value: Double, force: Boolean = false) {
     if (currentValue != value || force) {
       output.setValue(value)
       currentValue = value
-      println(value)
     }
   }
 }
