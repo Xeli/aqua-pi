@@ -28,9 +28,6 @@ object App {
 
     //adjust light every 30 seconds
     val (blues, whites) = setupLight(servers, conf, maybeConfigDir)
-    //val light = setupLight(servers, conf)
-    val executor = new ScheduledThreadPoolExecutor(1)
-    //executor.scheduleAtFixedRate(light, 0, 30, TimeUnit.SECONDS)
 
     //send metrics to kafka every 5 seconds
     //val gatherMetrics = new GatherMetrics(servers, ???, ato)
@@ -45,39 +42,56 @@ object App {
   }
 
   def setupLight(servers: Servers, conf: Config, maybeConfigDir: Option[String]): (Controller, Controller) = {
-    //TODO get blues/whites from config file
     val bluesData = parseLightData(conf, "light.channels.blue")
     val whitesData = parseLightData(conf, "light.channels.white")
 
-    val blues = setupLightChannel(servers, List(22,24), bluesData)
-    val whites = setupLightChannel(servers, List(14,25), whitesData)
+    val (blues, blueCalculation) = setupLightChannel(servers, List(22,24), bluesData)
+    val (whites, whiteCalculation) = setupLightChannel(servers, List(14,25), whitesData)
 
     if(!maybeConfigDir.isEmpty) {
+      val update = (() => {
+        val newConfig = getConfig(maybeConfigDir)
+        val blue = parseLightData(newConfig, "light.channels.blue")
+        val white = parseLightData(newConfig, "light.channels.white")
 
-      val update = (() => println("update"))
+        blueCalculation.setSections(blue)
+        whiteCalculation.setSections(white)
+      })
 
       val configFilePath = maybeConfigDir.get
       val fileWatcher = new FileWatcher(Paths.get(configFilePath), "light.conf", update)
     }
-    //val overrideBlue = new OverrideControllee(10, "light-blue")
-    //val executor = new ScheduledThreadPoolExecutor(1)
-    //executor.scheduleAtFixedRate(overrideBlue, 5, 30, TimeUnit.SECONDS)
-    //blues.addControllee(overrideBlue)
+
     (blues, whites)
   }
 
   def parseLightData(conf: Config, key: String): LightPattern = {
-    val rawList = conf.getList(key).unwrapped().asScala
-    rawList.map(a => ("12:00", 0.0))
+
+    val convertToScalaList:(Object => Seq[_]) = (item: Object) => {
+      item match {
+        case item:java.util.List[_] => item.asScala
+        case _ => throw new Exception()
+      }
+    }
+    val convertToPattern:(Seq[_] => (String, Double)) = (element: Seq[_]) => {
+      element match {
+        case Seq(time: String, value:Int) => (time, value.toDouble)
+        case _ => throw new Exception()
+      }
+    }
+    conf.getList(key).unwrapped()
+      .asScala
+      .map(convertToScalaList)
+      .map(convertToPattern)
   }
 
-  def setupLightChannel(servers: Servers, pins: List[Int], pattern: LightPattern): Controller = {
+  def setupLightChannel(servers: Servers, pins: List[Int], pattern: LightPattern): (Controller, LightCalculation) = {
     val sunset = new LightCalculation(1, pattern)
     val pwms = new PwmGroup(servers.pigpio, pins)
 
     val controller = new Controller(1, 10, pwms)
     controller.addControllee(sunset)
-    controller
+    (controller, sunset)
   }
 
   def getConfig(configDir: Option[String]): Config = {
