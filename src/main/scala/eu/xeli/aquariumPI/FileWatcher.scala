@@ -10,7 +10,6 @@ class FileWatcher(dir: Path, filename: String, function: (() => Unit)) extends R
 
   def run() {
     while(true) {
-      println("watching for changes")
       val watchKey = watchService.take()
       watchKey.pollEvents().asScala.foreach(process _)
       watchKey.reset()
@@ -18,20 +17,17 @@ class FileWatcher(dir: Path, filename: String, function: (() => Unit)) extends R
   }
 
   def process(event: WatchEvent[_]) {
-    var path: Path = null
     event.context() match {
-      case context:Path => path = context
+      case path:Path => {
+        if(path.endsWith(filename)) {
+          function()
+        }
+      }
       case _ => return
     }
 
-    if(path.endsWith(filename)) {
-      function()
-    }
   }
-
 
   val executor = new ScheduledThreadPoolExecutor(1)
   executor.execute(this)
-
-
 }
