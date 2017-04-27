@@ -80,7 +80,7 @@ class Controller(maxOffset: Double, secondsToTransition: Int, output: Output) ex
     }
 
     setValue(getEasingValue())
-    if(currentValue == endValue) {
+    if(Math.abs(currentValue - endValue) < maxOffset) {
       easing = false
       resetUpdateFrequency()
     }
