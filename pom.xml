@@ -15,10 +15,22 @@
   </licenses>
 
   <repositories>
-      <repository>
-          <id>maven-repo</id>
-          <url>file:///${project.basedir}/lib/maven-repo</url>
-      </repository>
+    <repository>
+      <id>central</id>
+      <!-- This should be at top, it makes maven try the central repo first and then others and hence faster dep resolution -->
+      <name>Maven Repository</name>
+      <url>https://repo1.maven.org/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>maven-repo</id>
+      <url>file:///${project.basedir}/lib/maven-repo</url>
+    </repository>
   </repositories>
 
   <properties>
@@ -35,18 +47,21 @@
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.typesafe/config -->
     <dependency>
         <groupId>com.typesafe</groupId>
         <artifactId>config</artifactId>
         <version>1.2.1</version>
     </dependency>
     <dependency>
+      <groupId>com.typesafe.scala-logging</groupId>
+      <artifactId>scala-logging_2.11</artifactId>
+      <version>3.5.0</version>
+    </dependency>
+    <dependency>
       <groupId>jpigpio</groupId>
       <artifactId>jpigpio</artifactId>
       <version>1.0.1</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka_2.10 -->
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka_2.11</artifactId>
@@ -56,6 +71,11 @@
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
       <version>1.8.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scalanlp</groupId>
+      <artifactId>breeze_2.11</artifactId>
+      <version>0.13.1</version>
     </dependency>
     <!-- Test -->
     <dependency>
