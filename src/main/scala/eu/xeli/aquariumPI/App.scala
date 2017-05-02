@@ -24,10 +24,13 @@ object App {
     val servers = getServers(conf)
 
     //ato has a listener, so it doesn't need a loop but acts event based
-    val ato = setupATO(servers, conf)
+    //val ato = setupATO(servers, conf)
 
     //adjust light every 30 seconds
-    val (blues, whites) = setupLight(servers, conf, maybeConfigDir)
+    //val (blues, whites) = setupLight(servers, conf, maybeConfigDir)
+
+    //ph
+    val ph = new Ph(servers.pigpio, maybeConfigDir, 0x4D, 1)
 
     //send metrics to kafka every 5 seconds
     //val gatherMetrics = new GatherMetrics(servers, ???, ato)
@@ -42,8 +45,8 @@ object App {
   }
 
   def setupLight(servers: Servers, conf: Config, maybeConfigDir: Option[String]): (Controller, Controller) = {
-    val bluesData = parseLightData(conf, "light.channels.blue")
-    val whitesData = parseLightData(conf, "light.channels.white")
+    val bluesData:LightPattern = ConfigUtils.convertListStringDouble(conf, "light.channels.blue")
+    val whitesData:LightPattern = ConfigUtils.convertListStringDouble(conf, "light.channels.white")
 
     val (blues, blueCalculation) = setupLightChannel(servers, List(22,24), bluesData)
     val (whites, whiteCalculation) = setupLightChannel(servers, List(14,25), whitesData)
@@ -51,8 +54,8 @@ object App {
     if(!maybeConfigDir.isEmpty) {
       val update = (() => {
         val newConfig = getConfig(maybeConfigDir)
-        val blue = parseLightData(newConfig, "light.channels.blue")
-        val white = parseLightData(newConfig, "light.channels.white")
+        val blue:LightPattern = ConfigUtils.convertListStringDouble(newConfig, "light.channels.blue")
+        val white:LightPattern = ConfigUtils.convertListStringDouble(newConfig, "light.channels.white")
 
         blueCalculation.setSections(blue)
         whiteCalculation.setSections(white)
@@ -65,25 +68,6 @@ object App {
     (blues, whites)
   }
 
-  def parseLightData(conf: Config, key: String): LightPattern = {
-
-    val convertToScalaList:(Object => Seq[_]) = (item: Object) => {
-      item match {
-        case item:java.util.List[_] => item.asScala
-        case _ => throw new Exception()
-      }
-    }
-    val convertToPattern:(Seq[_] => (String, Double)) = (element: Seq[_]) => {
-      element match {
-        case Seq(time: String, value:Int) => (time, value.toDouble)
-        case _ => throw new Exception()
-      }
-    }
-    conf.getList(key).unwrapped()
-      .asScala
-      .map(convertToScalaList)
-      .map(convertToPattern)
-  }
 
   def setupLightChannel(servers: Servers, pins: List[Int], pattern: LightPattern): (Controller, LightCalculation) = {
     val sunset = new LightCalculation(1, pattern)

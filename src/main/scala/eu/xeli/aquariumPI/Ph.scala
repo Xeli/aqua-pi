@@ -3,7 +3,6 @@ package eu.xeli.aquariumPI
 import gpio.I2c
 import breeze.linalg.{DenseMatrix, DenseVector}
 import breeze.stats.regression.leastSquares
-import collection.JavaConverters._
 import com.typesafe.config._
 import java.io.File
 
@@ -49,25 +48,6 @@ class Ph(server: Server, maybeConfigPath: Option[String], i2cAddress: Int, i2cBu
     if (!configFile.exists()) return defaultCalibrationPoints
 
     val config = ConfigFactory.parseFile(configFile)
-    val convertToScalaList:(Object => Seq[_]) = (item: Object) => {
-      item match {
-        case item:java.util.List[_] => item.asScala
-        case _ => throw new Exception()
-      }
-    }
-    val convertToCalibration:(Seq[_] => (Double, Double)) = (element: Seq[_]) => {
-      element match {
-        case Seq(ph: Double, measurement: Double) => (ph, measurement)
-        case Seq(ph: Int, measurement: Double) => (ph.toDouble, measurement)
-        case Seq(ph: Double, measurement: Int) => (ph, measurement.toDouble)
-        case Seq(ph: Int, measurement: Int) => (ph.toDouble, measurement.toDouble)
-        case _ => throw new Exception()
-      }
-    }
-
-    config.getList("ph.calibration").unwrapped()
-      .asScala
-      .map(convertToScalaList)
-      .map(convertToCalibration)
+    ConfigUtils.convertListDouble(config, "ph.calibration")
   }
 }
