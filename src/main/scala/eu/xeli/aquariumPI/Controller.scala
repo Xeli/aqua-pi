@@ -55,8 +55,20 @@ class Controller(maxOffset: Double, secondsToTransition: Int, output: Output) ex
     resetUpdateFrequency()
   }
 
+  def getFirstActivatedControllee(): Option[Controllee] = {
+    val controlleesClone = controllees.clone
+    var best:Option[Controllee] = None
+    while(!controlleesClone.isEmpty && best == null) {
+      val controllee = controllees.dequeue
+      if (controllee.activated) {
+        best = Some(controllee)
+      }
+    }
+    best
+  }
+
   def getCurrentTarget(): Double = {
-    controllees.find(_.activated) match {
+    getFirstActivatedControllee match {
       case Some(controllee) => controllee.getValue()
       case None => 0.0
     }
