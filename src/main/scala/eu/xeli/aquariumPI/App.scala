@@ -2,8 +2,7 @@ package eu.xeli.aquariumPI
 
 import gpio.{Listener, PwmGroup}
 import eu.xeli.aquariumPI._
-import eu.xeli.aquariumPI.light.LightCalculation
-import eu.xeli.aquariumPI.light.LightCalculation._
+import eu.xeli.aquariumPI.light.Light
 
 import collection.JavaConverters._
 import com.typesafe.config._
@@ -27,7 +26,12 @@ object App {
     //val ato = setupATO(servers, conf)
 
     //adjust light every 30 seconds
-    //val (blues, whites) = setupLight(servers, conf, maybeConfigDir)
+    val light = new Light(servers, conf)
+
+    if(!maybeConfigDir.isEmpty) {
+      val configFilePath = maybeConfigDir.get
+      val fileWatcher = new FileWatcher(Paths.get(configFilePath), "light.conf", () => light.updateChannels(getConfig(maybeConfigDir)))
+    }
 
     //ph
     val ph = new Ph(servers.pigpio, maybeConfigDir, 0x4D, 1)
@@ -44,39 +48,6 @@ object App {
     new Ato(servers, waterLevelSensor, atoPump)
   }
 
-  def setupLight(servers: Servers, conf: Config, maybeConfigDir: Option[String]): (Controller, Controller) = {
-    val bluesData:LightPattern = ConfigUtils.convertListStringDouble(conf, "light.channels.blue")
-    val whitesData:LightPattern = ConfigUtils.convertListStringDouble(conf, "light.channels.white")
-
-    val (blues, blueCalculation) = setupLightChannel(servers, List(22,24), bluesData)
-    val (whites, whiteCalculation) = setupLightChannel(servers, List(14,25), whitesData)
-
-    if(!maybeConfigDir.isEmpty) {
-      val update = (() => {
-        val newConfig = getConfig(maybeConfigDir)
-        val blue:LightPattern = ConfigUtils.convertListStringDouble(newConfig, "light.channels.blue")
-        val white:LightPattern = ConfigUtils.convertListStringDouble(newConfig, "light.channels.white")
-
-        blueCalculation.setSections(blue)
-        whiteCalculation.setSections(white)
-      })
-
-      val configFilePath = maybeConfigDir.get
-      val fileWatcher = new FileWatcher(Paths.get(configFilePath), "light.conf", update)
-    }
-
-    (blues, whites)
-  }
-
-
-  def setupLightChannel(servers: Servers, pins: List[Int], pattern: LightPattern): (Controller, LightCalculation) = {
-    val sunset = new LightCalculation(1, pattern)
-    val pwms = new PwmGroup(servers.pigpio, pins)
-
-    val controller = new Controller(1, 10, pwms)
-    controller.addControllee(sunset)
-    (controller, sunset)
-  }
 
   def getConfig(configDir: Option[String]): Config = {
     //gets the application.conf from jar resources
@@ -109,5 +80,4 @@ object App {
     val pigpio = new Server(pigpioHost, pigpioPort)
     new Servers(pigpio, kafka)
   }
-
 }
