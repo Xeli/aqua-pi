@@ -1,18 +1,20 @@
 package eu.xeli.aquariumPI
 
 import gpio.{Relay, Listener}
-import java.time.{Duration}
 
-class Ato(servers: Servers, waterLevelSensorPin: Int, pumpPin: Int) {
+import java.time.{Duration}
+import jpigpio.JPigpio
+
+class Ato(pigpio: JPigpio, waterLevelSensorPin: Int, pumpPin: Int) {
   @volatile
   var waterLevel = 0.0
 
   val criticalWaterLevel = 0
 
-  val pump = new Relay(servers.pigpio, pumpPin, true)
+  val pump = new Relay(pigpio, pumpPin, true)
 
   val steady = Duration.ofNanos(3e+8.toInt)
-  val listener = new Listener(servers.pigpio, waterLevelSensorPin, steady, handleChange)
+  val listener = new Listener(pigpio, waterLevelSensorPin, steady, handleChange)
 
   def handleChange = (level: Double) => {
     waterLevel = level

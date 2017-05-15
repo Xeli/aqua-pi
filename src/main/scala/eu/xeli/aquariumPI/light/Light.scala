@@ -3,9 +3,9 @@ package eu.xeli.aquariumPI.light
 import LightCalculation.LightPattern
 import eu.xeli.aquariumPI.ConfigUtils
 import eu.xeli.aquariumPI.gpio._
-import eu.xeli.aquariumPI.Servers
 import eu.xeli.aquariumPI.Controller
 
+import jpigpio.JPigpio
 import java.time._
 import com.typesafe.config._
 import scala.collection.immutable.HashMap
@@ -22,23 +22,23 @@ import java.nio.file.Paths
  * blue will be used as moonlight
  *
  */
-class Light(servers: Servers, config: Config) {
+class Light(pigpio: JPigpio, config: Config) {
   case class LightChannel(name: String, pattern: LightPattern, pins: PwmGroup, calculator: LightCalculation)
 
-  def parseLightChannels(servers: Servers, config: Config): Map[String, LightChannel] = {
-    val list = ConfigUtils.convertListConfig(config, "light").map(parseLightChannel(servers, _))
+  def parseLightChannels(config: Config): Map[String, LightChannel] = {
+    val list = ConfigUtils.convertListConfig(config, "light").map(parseLightChannel(_))
     val hashmap = HashMap[String, LightChannel]()
     list.foldLeft(hashmap)((m,lc) => m + (lc.name -> lc))
   }
 
-  def parseLightChannel(servers: Servers, config: Config): LightChannel = {
+  def parseLightChannel(config: Config): LightChannel = {
     val name = config.getString("name")
 
     val pattern = ConfigUtils.convertListStringDouble(config, "pattern")
     val calculator = new LightCalculation(1, pattern)
 
     val pins = ConfigUtils.convertListInt(config, "pins")
-    val pwms = new PwmGroup(servers.pigpio, pins)
+    val pwms = new PwmGroup(pigpio, pins)
 
     LightChannel(name, pattern, pwms, calculator)
   }
@@ -50,7 +50,7 @@ class Light(servers: Servers, config: Config) {
   }
 
   def updateChannels(newConfig: Config) {
-      val lightChannels = parseLightChannels(servers, newConfig)
+      val lightChannels = parseLightChannels(newConfig)
       calculators.map(replacePattern(_, lightChannels))
   }
 
@@ -61,6 +61,6 @@ class Light(servers: Servers, config: Config) {
   }
 
   var lastValue = LightMetric(0,0)
-  val calculators: Map[String, LightChannel] = parseLightChannels(servers, config)
+  val calculators: Map[String, LightChannel] = parseLightChannels(config)
   val controllers: Seq[Controller] = calculators.map({case (k:String,v:LightChannel) => setupController(v)}).to[collection.immutable.Seq]
 }

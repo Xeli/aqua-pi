@@ -1,9 +1,10 @@
 package eu.xeli.aquariumPI
 
-import gpio.{Listener, PwmGroup}
 import eu.xeli.aquariumPI._
 import eu.xeli.aquariumPI.light.Light
+import eu.xeli.aquariumPI.gpio.Pigpio
 
+import jpigpio.JPigpio
 import collection.JavaConverters._
 import com.typesafe.config._
 import java.util.concurrent._
@@ -21,12 +22,13 @@ object App {
 
     val conf = getConfig(maybeConfigDir)
     val servers = getServers(conf)
+    val pigpio = Pigpio.getInstance(servers.pigpio)
 
     //ato has a listener, so it doesn't need a loop but acts event based
-    //val ato = setupATO(servers, conf)
+    val ato = setupATO(pigpio, conf)
 
     //adjust light every 30 seconds
-    val light = new Light(servers, conf)
+    val light = new Light(pigpio, conf)
 
     if(!maybeConfigDir.isEmpty) {
       val configFilePath = maybeConfigDir.get
@@ -42,10 +44,10 @@ object App {
     //executor.scheduleAtFixedRate(gatherMetrics, 0, 5, TimeUnit.SECONDS)
   }
 
-  def setupATO(servers: Servers, conf: Config): Ato = {
+  def setupATO(pigpio: JPigpio, conf: Config): Ato = {
     val waterLevelSensor = conf.getInt("gpio.ato.waterlevel")
     val atoPump = conf.getInt("gpio.ato.pump")
-    new Ato(servers, waterLevelSensor, atoPump)
+    new Ato(pigpio, waterLevelSensor, atoPump)
   }
 
 

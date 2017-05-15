@@ -4,15 +4,16 @@ import eu.xeli.aquariumPI.Server
 import jpigpio.JPigpio
 import jpigpio.PigpioException
 
-class Pwm(server: Server, pin: Int) {
-  val pigpio = Pigpio.getInstance(server)
+class Pwm(pigpio: JPigpio, pin: Int) {
+  val Range = 250
+  val Frequency = 100
 
   pigpio.gpioSetMode(pin, JPigpio.PI_OUTPUT)
-  pigpio.setPWMRange(pin, 250)
-  pigpio.setPWMFrequency(pin, 100)
+  pigpio.setPWMRange(pin, Range)
+  pigpio.setPWMFrequency(pin, Frequency)
 
   def set(percentage: Double) {
-    val dutycycle = Math.round(250 * (percentage / 100.0)).toInt
+    val dutycycle = Math.round(Range * (percentage / Frequency)).toInt
     pigpio.setPWMDutycycle(pin, dutycycle)
   }
 

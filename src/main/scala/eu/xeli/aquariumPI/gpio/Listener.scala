@@ -5,9 +5,7 @@ import jpigpio.{Alert, JPigpio}
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 
-class Listener(server: Server, pin: Int, steady: Duration, function: Double => Unit) {
-  val pigpio = Pigpio.getInstance(server)
-
+class Listener(pigpio: JPigpio, pin: Int, steady: Duration, function: Double => Unit) {
   val alert = new Alert {
     def alert(pin: Int, level: Int, tick: Long) {
       function(level)
