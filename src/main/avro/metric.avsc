@@ -1,17 +1,20 @@
 {
   "namespace": "eu.xeli.aquariumPI.avro",
   "type": "record",
-  "name": "metric",
+  "name": "Metric",
   "fields": [
     {"name": "time", "type": "long"},
     {"name": "waterLevel", "type": "double"},
     {"name": "light", "type": {
-      "name": "light",
-      "type": "record",
-      "fields": [
-        {"name": "blue", "type": "double"},
-        {"name": "white", "type": "double"}
-      ]
+      "type": "array",
+      "items": {
+        "name": "Light",
+        "type": "record",
+        "fields": [
+          {"name": "name", "type": "string"},
+          {"name": "value", "type": "double"}
+        ]
+      }
     }}
   ]
 }
