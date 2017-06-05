@@ -4,7 +4,7 @@ import eu.xeli.aquariumPI._
 import eu.xeli.aquariumPI.light.Light
 import eu.xeli.aquariumPI.gpio.Pigpio
 
-import jpigpio.JPigpio
+import eu.xeli.jpigpio.JPigpio
 import collection.JavaConverters._
 import com.typesafe.config._
 import java.util.concurrent._

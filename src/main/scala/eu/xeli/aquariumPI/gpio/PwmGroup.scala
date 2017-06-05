@@ -2,7 +2,7 @@ package eu.xeli.aquariumPI.gpio
 
 import eu.xeli.aquariumPI.{Output, Server}
 
-import jpigpio.JPigpio
+import eu.xeli.jpigpio.JPigpio
 
 class PwmGroup(pigpio: JPigpio, pins: Seq[Int]) extends Output {
   val pwms = pins.map(new Pwm(pigpio, _))

@@ -1,7 +1,7 @@
 package eu.xeli.aquariumPI.gpio
 
 import eu.xeli.aquariumPI.Server
-import jpigpio.JPigpio
+import eu.xeli.jpigpio.JPigpio
 
 class I2c(server: Server, address: Int, bus: Int) {
   val pigpio = Pigpio.getInstance(server)

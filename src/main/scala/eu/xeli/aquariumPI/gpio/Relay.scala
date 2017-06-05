@@ -2,7 +2,7 @@ package eu.xeli.aquariumPI.gpio
 
 import eu.xeli.aquariumPI.gpio._
 import eu.xeli.aquariumPI.Server
-import jpigpio._
+import eu.xeli.jpigpio._
 
 class Relay(pigpio: JPigpio, pin: Int, hasInverseHardware: Boolean = false) {
   pigpio.gpioSetMode(pin, JPigpio.PI_OUTPUT)

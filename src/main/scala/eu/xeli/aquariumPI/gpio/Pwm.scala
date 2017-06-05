@@ -1,8 +1,8 @@
 package eu.xeli.aquariumPI.gpio
 
 import eu.xeli.aquariumPI.Server
-import jpigpio.JPigpio
-import jpigpio.PigpioException
+import eu.xeli.jpigpio.JPigpio
+import eu.xeli.jpigpio.PigpioException
 
 class Pwm(pigpio: JPigpio, pin: Int) {
   val Range = 250

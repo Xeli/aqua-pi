@@ -5,7 +5,7 @@ import eu.xeli.aquariumPI.ConfigUtils
 import eu.xeli.aquariumPI.gpio._
 import eu.xeli.aquariumPI.Controller
 
-import jpigpio.JPigpio
+import eu.xeli.jpigpio.JPigpio
 import java.time._
 import com.typesafe.config._
 import scala.collection.immutable.HashMap

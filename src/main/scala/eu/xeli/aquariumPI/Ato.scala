@@ -3,7 +3,7 @@ package eu.xeli.aquariumPI
 import gpio.{Relay, Listener}
 
 import java.time.{Duration}
-import jpigpio.JPigpio
+import eu.xeli.jpigpio.JPigpio
 
 class Ato(pigpio: JPigpio, waterLevelSensorPin: Int, pumpPin: Int) {
   @volatile
