@@ -9,9 +9,11 @@ import eu.xeli.jpigpio.JPigpio
 import java.time._
 import com.typesafe.config._
 import scala.collection.immutable.HashMap
+import scala.util.{Try, Success, Failure}
 import java.util.concurrent._
-import java.io.File
-import java.nio.file.Paths
+
+import pureconfig._
+import pureconfig.error.ConfigReaderFailures
 
 /*
  *
@@ -25,42 +27,80 @@ import java.nio.file.Paths
 class Light(pigpio: JPigpio, config: Config) {
   case class LightChannel(name: String, pattern: LightPattern, pins: PwmGroup, calculator: LightCalculation)
 
-  def parseLightChannels(config: Config): Map[String, LightChannel] = {
-    val list = ConfigUtils.convertListConfig(config, "light").map(parseLightChannel(_))
+  case class LightConfig(channels: List[LightChannelConfig])
+  case class LightChannelConfig(name: String, pattern: List[List[String]], pins: List[Int])
+
+  private def getLightConfig(config: Config): Try[LightConfig] = {
+    val lightConfig: Either[ConfigReaderFailures, LightConfig] = loadConfig[LightConfig](config.getConfig("light"))
+    lightConfig match {
+      case Left(error)        => Failure(new Exception("Light config load exception"))
+      case Right(lightConfig) => Success(lightConfig)
+    }
+  }
+
+  private def lightChannelConfigToLightChannel(channel: LightChannelConfig): Try[LightChannel] = {
+    val baseValue:Try[List[(String, Double)]] = Try(List())
+    val lightPattern: Try[List[(String, Double)]] = channel.pattern.map(stringListToPatternElement)
+                                                                   .foldLeft(baseValue)(foldToTryList)
+    lightPattern.map(pattern =>
+        LightChannel(channel.name,
+                     pattern,
+                     new PwmGroup(pigpio, channel.pins),
+                     new LightCalculation(1, pattern))
+    )
+  }
+
+  private def stringListToPatternElement(element: List[String]): Try[(String, Double)] = {
+    element match {
+      case List(name, value) => {
+        val newValue = Try(value.toDouble)
+        newValue.map((name, _))
+      }
+      case _ => Failure(new Exception("Light pattern - wrong list size"))
+    }
+  }
+
+  private def lightChannelsToMap(lightChannels: List[LightChannel]): Map[String, LightChannel] = {
     val hashmap = HashMap[String, LightChannel]()
-    list.foldLeft(hashmap)((m,lc) => m + (lc.name -> lc))
+    lightChannels.foldLeft(hashmap)(((map, channel) => map + (channel.name -> channel)))
   }
 
-  def parseLightChannel(config: Config): LightChannel = {
-    val name = config.getString("name")
-
-    val pattern = ConfigUtils.convertListStringDouble(config, "pattern")
-    val calculator = new LightCalculation(1, pattern)
-
-    val pins = ConfigUtils.convertListInt(config, "pins")
-    val pwms = new PwmGroup(pigpio, pins)
-
-    LightChannel(name, pattern, pwms, calculator)
+  //convert List[Try[T]] to Try[List[T]]
+  //if any element in the list is a failure, the whole function will return a failure
+  private def foldToTryList[A](listTry: Try[List[A]], elementTry: Try[A]): Try[List[A]] = {
+      elementTry.flatMap(element => listTry.map(list => list :+ element))
   }
 
-  def setupController(channel: LightChannel): Controller = {
-    val controller = new Controller(1, 10, channel.pins)
+  private def setupController(channel: LightChannel): Controller = {
+    val controller = new Controller(maxOffset = 10, secondsToTransition = 1, output = channel.pins)
     controller.addControllee(channel.calculator)
     controller
   }
 
   def updateChannels(newConfig: Config) {
-      val lightChannels = parseLightChannels(newConfig)
-      calculators.map(replacePattern(_, lightChannels))
+      val lightChannelsTry = parseConfig(newConfig)
+      if (lightChannelsTry.isSuccess) {
+        lightChannelsTry.get.foreach({ case (name, lightChannel) => replacePattern(lightChannel, channels)})
+      }
   }
 
-  def replacePattern(entry: (String, LightChannel), newValues: Map[String, LightChannel]) {
-    val (name, lightChannel) = entry
-    val newLightChannel = newValues(name)
-    lightChannel.calculator.setSections(newLightChannel.pattern)
+  private def replacePattern(newLightChannel: LightChannel, channels: Map[String, (LightChannel, Controller)]) {
+    val (channel, controller) = channels(newLightChannel.name)
+    channel.calculator.setSections(newLightChannel.pattern)
   }
 
-  var lastValue = LightMetric(0,0)
-  val calculators: Map[String, LightChannel] = parseLightChannels(config)
-  val controllers: Seq[Controller] = calculators.map({case (k:String,v:LightChannel) => setupController(v)}).to[collection.immutable.Seq]
+  private def parseConfig(config: Config): Try[Map[String, LightChannel]] = {
+    val emptyTryList: Try[List[LightChannel]] = Try(List())
+    getLightConfig(config)                          //Try[LightConfig]
+      .map(_.channels)                              //Try[List[LightChannelConfig]]
+      .map(_.map(lightChannelConfigToLightChannel)) //Try[List[Try[LightChannel]]]
+      .map(_.foldLeft(emptyTryList)(foldToTryList)) //Try[Try[List[LightChannel]]
+      .flatten                                      //Try[List[LightChannel]]
+      .map(lightChannelsToMap)                      //Try[Map[String, LightChannel]
+  }
+
+  val channels:(Map[String, (LightChannel, Controller)]) = parseConfig(config) match {
+    case Success(lightChannelMap) => lightChannelMap.mapValues(channel => (channel, setupController(channel)))
+    case Failure(e)               => throw e
+  }
 }

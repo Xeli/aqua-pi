@@ -20,6 +20,7 @@ object ConfigUtils {
   }
 
   def convertToConfig(item: Any): Config = {
+    print(item.getClass)
     item match {
       case (c: Config) => c
       case _           => throw new Exception()
