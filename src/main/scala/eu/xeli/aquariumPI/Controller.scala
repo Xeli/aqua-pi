@@ -19,7 +19,8 @@ import java.util.concurrent._
  * The controller will adjust the light every 5 seconds for the sunset module, say it's at 12% now
  * if at any point the second override module wants to force a value, say 90%, this controller can 'ease':
  *    instead of going from 12% to 90%, it will go from 12% - 38% - 64% - 90% in several seconds.
- *    the actual step size can be given as parameter in the constructor
+ *    the actual step size can be given as parameter in the constructor, maxOffset.
+ *    This max offset determines how much the value can vary between steps
  */
 class Controller(maxOffset: Double, secondsToTransition: Int, output: Output) extends Runnable {
   val controllees = PriorityQueue[Controllee]()
