@@ -4,6 +4,7 @@ import LightCalculation.LightPattern
 import eu.xeli.aquariumPI.ConfigUtils
 import eu.xeli.aquariumPI.gpio._
 import eu.xeli.aquariumPI.Controller
+import eu.xeli.aquariumPI.config.pureconfig.TimeDoubleConverter
 
 import eu.xeli.jpigpio.JPigpio
 import java.time._
@@ -28,7 +29,9 @@ class Light(pigpio: JPigpio, config: Config) {
   case class LightChannel(name: String, pattern: LightPattern, pins: PwmGroup, calculator: LightCalculation)
 
   case class LightConfig(channels: List[LightChannelConfig])
-  case class LightChannelConfig(name: String, pattern: List[List[String]], pins: List[Int])
+  case class LightChannelConfig(name: String, pattern: LightPattern, pins: List[Int])
+
+  implicit val timeDoubleConverter = new TimeDoubleConverter()
 
   private def getLightConfig(config: Config): Try[LightConfig] = {
     val lightConfig: Either[ConfigReaderFailures, LightConfig] = loadConfig[LightConfig](config.getConfig("light"))
@@ -38,37 +41,16 @@ class Light(pigpio: JPigpio, config: Config) {
     }
   }
 
-  private def lightChannelConfigToLightChannel(channel: LightChannelConfig): Try[LightChannel] = {
-    val baseValue:Try[List[(String, Double)]] = Try(List())
-    val lightPattern: Try[List[(String, Double)]] = channel.pattern.map(stringListToPatternElement)
-                                                                   .foldLeft(baseValue)(foldToTryList)
-    lightPattern.map(pattern =>
-        LightChannel(channel.name,
-                     pattern,
-                     new PwmGroup(pigpio, channel.pins),
-                     new LightCalculation(1, pattern))
-    )
-  }
-
-  private def stringListToPatternElement(element: List[String]): Try[(String, Double)] = {
-    element match {
-      case List(name, value) => {
-        val newValue = Try(value.toDouble)
-        newValue.map((name, _))
-      }
-      case _ => Failure(new Exception("Light pattern - wrong list size"))
-    }
+  private def lightChannelConfigToLightChannel(channel: LightChannelConfig): LightChannel = {
+    LightChannel(channel.name,
+                 channel.pattern,
+                 new PwmGroup(pigpio, channel.pins),
+                 new LightCalculation(1, channel.pattern))
   }
 
   private def lightChannelsToMap(lightChannels: List[LightChannel]): Map[String, LightChannel] = {
     val hashmap = HashMap[String, LightChannel]()
     lightChannels.foldLeft(hashmap)(((map, channel) => map + (channel.name -> channel)))
-  }
-
-  //convert List[Try[T]] to Try[List[T]]
-  //if any element in the list is a failure, the whole function will return a failure
-  private def foldToTryList[A](listTry: Try[List[A]], elementTry: Try[A]): Try[List[A]] = {
-      elementTry.flatMap(element => listTry.map(list => list :+ element))
   }
 
   private def setupController(channel: LightChannel): Controller = {
@@ -93,9 +75,7 @@ class Light(pigpio: JPigpio, config: Config) {
     val emptyTryList: Try[List[LightChannel]] = Try(List())
     getLightConfig(config)                          //Try[LightConfig]
       .map(_.channels)                              //Try[List[LightChannelConfig]]
-      .map(_.map(lightChannelConfigToLightChannel)) //Try[List[Try[LightChannel]]]
-      .map(_.foldLeft(emptyTryList)(foldToTryList)) //Try[Try[List[LightChannel]]
-      .flatten                                      //Try[List[LightChannel]]
+      .map(_.map(lightChannelConfigToLightChannel)) //Try[List[LightChannel]]
       .map(lightChannelsToMap)                      //Try[Map[String, LightChannel]
   }
 

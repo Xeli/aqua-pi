@@ -36,7 +36,7 @@ class LightCalculation(priority: Int, var initialPattern: LightPattern) extends 
 
   //Convert a list of time and led intensity into List of sections
   def convert(data: LightPattern): Seq[Section] = {
-    val moments = data.map({ case (time, value) => Moment(LocalTime.parse(time), value) })
+    val moments = data.map({ case (time, value) => Moment(time, value) })
     val momentTuples = moments zip moments.tail
     momentTuples.map({ case (x,y) => Section(x,y)})
   }
@@ -66,5 +66,5 @@ class LightCalculation(priority: Int, var initialPattern: LightPattern) extends 
 }
 
 object LightCalculation {
-  type LightPattern = Seq[(String, Double)]
+  type LightPattern = Seq[(LocalTime, Double)]
 }
