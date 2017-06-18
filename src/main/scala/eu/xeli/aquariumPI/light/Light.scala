@@ -71,7 +71,7 @@ class Light(pigpio: JPigpio, config: Config) {
    * Setting up the controllers
    */
   private[this] def setupController(channel: LightChannel): Controller = {
-    val controller = new Controller(maxOffset = 10, secondsToTransition = 1, output = channel.pins)
+    val controller = new Controller(channel.pins, true, maxOffset = 10, secondsToTransition = 1)
     controller.addControllee(channel.calculator)
     controller
   }
@@ -81,6 +81,6 @@ class Light(pigpio: JPigpio, config: Config) {
    */
   private[this] def replacePattern(newLightChannel: LightChannel, channels: Map[String, (LightChannel, Controller)]) {
     val (channel, controller) = channels(newLightChannel.name)
-    channel.calculator.setSections(newLightChannel.pattern)
+    channel.calculator.update(newLightChannel.pattern)
   }
 }
