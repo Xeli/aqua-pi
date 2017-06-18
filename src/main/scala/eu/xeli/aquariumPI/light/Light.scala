@@ -1,29 +1,23 @@
 package eu.xeli.aquariumPI.light
 
 import LightCalculation.LightPattern
-import eu.xeli.aquariumPI.ConfigUtils
-import eu.xeli.aquariumPI.gpio._
+import eu.xeli.aquariumPI.gpio.PwmGroup
 import eu.xeli.aquariumPI.Controller
 import eu.xeli.aquariumPI.config.pureconfig.TimeDoubleConverter
 
-import eu.xeli.jpigpio.JPigpio
-import java.time._
-import com.typesafe.config._
 import scala.collection.immutable.HashMap
 import scala.util.{Try, Success, Failure}
 import java.util.concurrent._
+import java.time._
 
+import eu.xeli.jpigpio.JPigpio
+import com.typesafe.config._
 import pureconfig._
 import pureconfig.error.ConfigReaderFailures
 
 /*
- *
- * This class drives the lights
- *
- * Lights consist of 2 units with each 2 channels (white/blue)
- *
- * blue will be used as moonlight
- *
+ * This class drives the lights by using pwms
+ * The lights configuration is retrieved from a config file
  */
 class Light(pigpio: JPigpio, config: Config) {
   case class LightChannel(name: String, pattern: LightPattern, pins: PwmGroup, calculator: LightCalculation)
