@@ -28,36 +28,6 @@ import pureconfig.error.ConfigReaderFailures
 class Light(pigpio: JPigpio, config: Config) {
   case class LightChannel(name: String, pattern: LightPattern, pins: PwmGroup, calculator: LightCalculation)
 
-  case class LightConfig(channels: List[LightChannelConfig])
-  case class LightChannelConfig(name: String, pattern: LightPattern, pins: List[Int])
-
-  implicit val timeDoubleConverter = new TimeDoubleConverter()
-
-  private def getLightConfig(config: Config): Try[LightConfig] = {
-    val lightConfig: Either[ConfigReaderFailures, LightConfig] = loadConfig[LightConfig](config.getConfig("light"))
-    lightConfig match {
-      case Left(error)        => Failure(new Exception("Light config load exception"))
-      case Right(lightConfig) => Success(lightConfig)
-    }
-  }
-
-  private def lightChannelConfigToLightChannel(channel: LightChannelConfig): LightChannel = {
-    LightChannel(channel.name,
-                 channel.pattern,
-                 new PwmGroup(pigpio, channel.pins),
-                 new LightCalculation(1, channel.pattern))
-  }
-
-  private def lightChannelsToMap(lightChannels: List[LightChannel]): Map[String, LightChannel] = {
-    val hashmap = HashMap[String, LightChannel]()
-    lightChannels.foldLeft(hashmap)(((map, channel) => map + (channel.name -> channel)))
-  }
-
-  private def setupController(channel: LightChannel): Controller = {
-    val controller = new Controller(maxOffset = 10, secondsToTransition = 1, output = channel.pins)
-    controller.addControllee(channel.calculator)
-    controller
-  }
 
   def updateChannels(newConfig: Config) {
       val lightChannelsTry = parseConfig(newConfig)
@@ -66,17 +36,56 @@ class Light(pigpio: JPigpio, config: Config) {
       }
   }
 
-  private def replacePattern(newLightChannel: LightChannel, channels: Map[String, (LightChannel, Controller)]) {
-    val (channel, controller) = channels(newLightChannel.name)
-    channel.calculator.setSections(newLightChannel.pattern)
-  }
-
-  private def parseConfig(config: Config): Try[Map[String, LightChannel]] = {
+  def parseConfig(config: Config): Try[Map[String, LightChannel]] = {
     val emptyTryList: Try[List[LightChannel]] = Try(List())
     getLightConfig(config)                          //Try[LightConfig]
       .map(_.channels)                              //Try[List[LightChannelConfig]]
       .map(_.map(lightChannelConfigToLightChannel)) //Try[List[LightChannel]]
       .map(lightChannelsToMap)                      //Try[Map[String, LightChannel]
+  }
+
+  /*
+   * Converting LightConfig => LightChannels
+   */
+  case class LightConfig(channels: List[LightChannelConfig])
+  case class LightChannelConfig(name: String, pattern: LightPattern, pins: List[Int])
+
+  private[this] def getLightConfig(config: Config): Try[LightConfig] = {
+    implicit val timeDoubleConverter = new TimeDoubleConverter()
+    val lightConfig: Either[ConfigReaderFailures, LightConfig] = loadConfig[LightConfig](config.getConfig("light"))
+    lightConfig match {
+      case Left(error)        => Failure(new Exception("Light config load exception"))
+      case Right(lightConfig) => Success(lightConfig)
+    }
+  }
+
+  private[this] def lightChannelConfigToLightChannel(channel: LightChannelConfig): LightChannel = {
+    LightChannel(channel.name,
+                 channel.pattern,
+                 new PwmGroup(pigpio, channel.pins),
+                 new LightCalculation(1, channel.pattern))
+  }
+
+  private[this] def lightChannelsToMap(lightChannels: List[LightChannel]): Map[String, LightChannel] = {
+    val hashmap = HashMap[String, LightChannel]()
+    lightChannels.foldLeft(hashmap)(((map, channel) => map + (channel.name -> channel)))
+  }
+
+  /*
+   * Setting up the controllers
+   */
+  private[this] def setupController(channel: LightChannel): Controller = {
+    val controller = new Controller(maxOffset = 10, secondsToTransition = 1, output = channel.pins)
+    controller.addControllee(channel.calculator)
+    controller
+  }
+
+  /*
+   * Updating controllers with the new pattern
+   */
+  private[this] def replacePattern(newLightChannel: LightChannel, channels: Map[String, (LightChannel, Controller)]) {
+    val (channel, controller) = channels(newLightChannel.name)
+    channel.calculator.setSections(newLightChannel.pattern)
   }
 
   val channels:(Map[String, (LightChannel, Controller)]) = parseConfig(config) match {
