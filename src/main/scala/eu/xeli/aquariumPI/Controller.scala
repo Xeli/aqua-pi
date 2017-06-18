@@ -22,7 +22,7 @@ import java.util.concurrent._
  *    the actual step size can be given as parameter in the constructor, maxOffset.
  *    This max offset determines how much the value can vary between steps
  */
-class Controller(maxOffset: Double, secondsToTransition: Int, output: Output) extends Runnable {
+class Controller(output: Output, enableEasing: Boolean, maxOffset: Double = 10.0, secondsToTransition: Int = 1) extends Runnable {
   val controllees = PriorityQueue[Controllee]()
 
   @volatile
