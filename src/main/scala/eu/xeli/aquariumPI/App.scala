@@ -2,7 +2,9 @@ package eu.xeli.aquariumPI
 
 import eu.xeli.aquariumPI._
 import eu.xeli.aquariumPI.light.Light
+import eu.xeli.aquariumPI.timer.Timer
 import eu.xeli.aquariumPI.gpio.Pigpio
+import eu.xeli.aquariumPI.config.InvalidConfigException
 
 import eu.xeli.jpigpio.JPigpio
 import collection.JavaConverters._
@@ -24,54 +26,61 @@ object App {
     val servers = getServers(conf)
     val pigpio = Pigpio.getInstance(servers.pigpio)
 
-    //ato has a listener, so it doesn't need a loop but acts event based
-    val ato = setupATO(pigpio, conf)
+    try {
+      //ato has a listener, so it doesn't need a loop but acts event based
+      val waterLevelSensor = conf.getInt("gpio.ato.waterlevel")
+      val atoPump = conf.getInt("gpio.ato.pump")
+      val ato = new Ato(pigpio, waterLevelSensor, atoPump)
 
-    //adjust light every 30 seconds
-    val light = new Light(pigpio, conf)
+      //adjust light every 30 seconds
+      val light = new Light(pigpio, conf)
 
-    if(!maybeConfigDir.isEmpty) {
-      val configFilePath = maybeConfigDir.get
-      val fileWatcher = new FileWatcher(Paths.get(configFilePath), "light.conf", () => light.updateChannels(getConfig(maybeConfigDir)))
+      //set timers on the relays
+      val timer = new Timer(pigpio, conf)
+
+      //ph
+      val ph = new Ph(servers.pigpio, maybeConfigDir, 0x4D, 1)
+
+      if(!maybeConfigDir.isEmpty) {
+        val configFilePath = maybeConfigDir.get
+        val lightFileWatcher = new FileWatcher(Paths.get(configFilePath), "light.conf", () => light.update(getConfig(maybeConfigDir)))
+        val timerFileWatcher = new FileWatcher(Paths.get(configFilePath), "timer.conf", () => timer.update(getConfig(maybeConfigDir)))
+      }
+
+
+      //send metrics to kafka every 5 seconds
+      //val gatherMetrics = new GatherMetrics(servers, ???, ato)
+      //val metricExecutor = new ScheduledThreadPoolExecutor(1)
+      //executor.scheduleAtFixedRate(gatherMetrics, 0, 5, TimeUnit.SECONDS)
+
+    } catch {
+      case e: InvalidConfigException => {
+        println(e)
+        System.exit(1)
+      }
     }
-
-    //ph
-    val ph = new Ph(servers.pigpio, maybeConfigDir, 0x4D, 1)
-
-    //send metrics to kafka every 5 seconds
-    //val gatherMetrics = new GatherMetrics(servers, ???, ato)
-    //val metricExecutor = new ScheduledThreadPoolExecutor(1)
-    //executor.scheduleAtFixedRate(gatherMetrics, 0, 5, TimeUnit.SECONDS)
   }
-
-  def setupATO(pigpio: JPigpio, conf: Config): Ato = {
-    val waterLevelSensor = conf.getInt("gpio.ato.waterlevel")
-    val atoPump = conf.getInt("gpio.ato.pump")
-    new Ato(pigpio, waterLevelSensor, atoPump)
-  }
-
 
   def getConfig(configDir: Option[String]): Config = {
     //gets the application.conf from jar resources
     val baseConfig = ConfigFactory.load().getConfig("aquaPI")
 
+    val configsFilename = Seq("light.conf", "timer.conf", "servers.conf")
     configDir match {
-      case Some(configDirString) => addConfigs(baseConfig, configDirString)
+      case Some(configDirString) => {
+        val configsPath = configsFilename.map(configDirString + "/" + _)
+        configsPath.foldLeft(baseConfig)(addConfigs)
+      }
       case None => baseConfig
     }
   }
 
-  def addConfigs(baseConfig: Config, dir: String): Config = {
-    println("Getting more configs")
-    val light = new File(dir + "/light.conf")
-    val lightConfig = ConfigFactory.parseFile(light)
+  def addConfigs(baseConfig: Config, configPath: String): Config = {
+    println("Getting more configs" + configPath)
+    val file = new File(configPath)
+    val config = ConfigFactory.parseFile(file)
 
-    val server = new File(dir + "/servers.conf")
-    val serverConfig = ConfigFactory.parseFile(server)
-
-    val configs = List(lightConfig, serverConfig)
-
-    configs.fold(baseConfig){ (config, newConfig) => newConfig.withFallback(config) }
+    config.withFallback(baseConfig)
   }
 
   def getServers(conf: Config): Servers = {

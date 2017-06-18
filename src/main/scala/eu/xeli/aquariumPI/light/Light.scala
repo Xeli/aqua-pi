@@ -4,6 +4,7 @@ import LightCalculation.LightPattern
 import eu.xeli.aquariumPI.gpio.PwmGroup
 import eu.xeli.aquariumPI.Controller
 import eu.xeli.aquariumPI.config.pureconfig.TimeDoubleConverter
+import eu.xeli.aquariumPI.config.InvalidConfigException
 
 import scala.collection.immutable.HashMap
 import scala.util.{Try, Success, Failure}
@@ -26,10 +27,10 @@ class Light(pigpio: JPigpio, config: Config) {
 
   val channels: (Map[String, (LightChannel, Controller)]) = parseConfig(config) match {
     case Success(lightChannelMap) => lightChannelMap.mapValues(channel => (channel, setupController(channel)))
-    case Failure(e)               => throw e
+    case Failure(e)               => throw new InvalidConfigException("Invalid light config", e)
   }
 
-  def updateChannels(newConfig: Config) {
+  def update(newConfig: Config) {
       val lightChannelsTry = parseConfig(newConfig)
       if (lightChannelsTry.isSuccess) {
         lightChannelsTry.get.foreach({ case (name, lightChannel) => replacePattern(lightChannel, channels)})

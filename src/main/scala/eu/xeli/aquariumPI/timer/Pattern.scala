@@ -4,5 +4,5 @@ import java.time.LocalTime
 import scala.concurrent.duration._
 
 sealed trait Pattern
-case class TimePattern(name: String, pattern: List[(LocalTime, Double)], relayId: Int) extends Pattern
-case class IntervalPattern(name: String, intervalDuration: Duration, startTime: LocalTime, relayId: Int) extends Pattern
+case class TimePattern(pattern: List[(LocalTime, Double)]) extends Pattern
+case class IntervalPattern(intervalDuration: Duration, startTime: LocalTime) extends Pattern

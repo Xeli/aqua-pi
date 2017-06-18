@@ -19,11 +19,14 @@ import LightCalculation._
  *
  */
 class LightCalculation(priority: Int, var pattern: LightPattern) extends Controllee(priority) {
-  val moments = new Moments(pattern)
+  var moments = new Moments(pattern)
 
   def getFrequency(): Int = 5
 
-  def update(pattern: Seq[(LocalTime, Double)]) = moments.update(pattern)
+  def update(newPattern: Seq[(LocalTime, Double)]) = {
+    moments = new Moments(newPattern)
+    pattern = newPattern
+  }
 
   def getValue(): Double = {
     val zone = ZoneId.of("Europe/Amsterdam")

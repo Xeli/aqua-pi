@@ -6,13 +6,23 @@ import eu.xeli.aquariumPI.Moments
 import java.time._
 import scala.concurrent.duration._
 
-class TimerCalculation(priority: Int, pattern: Pattern) extends Controllee(priority: Int) {
+class TimerCalculation(priority: Int, var pattern: Pattern) extends Controllee(priority: Int) {
   var moments = pattern match {
     case timePattern: TimePattern => new Moments(timePattern.pattern)
     case _ => null
   }
 
   def getFrequency(): Int = 5
+
+  def update(newPattern: Pattern) {
+    newPattern match {
+      case timePattern: TimePattern => {
+        moments = new Moments(timePattern.pattern)
+        pattern = newPattern
+      }
+      case intervalPattern: IntervalPattern => pattern = newPattern
+    }
+  }
 
   def getValue() : Double = {
     pattern match {

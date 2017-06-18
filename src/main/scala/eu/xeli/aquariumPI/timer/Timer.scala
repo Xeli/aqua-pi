@@ -3,6 +3,7 @@ package eu.xeli.aquariumPI.timer
 import eu.xeli.aquariumPI.Controller
 import eu.xeli.aquariumPI.gpio.Relay
 import eu.xeli.aquariumPI.config.pureconfig.TimeDoubleConverter
+import eu.xeli.aquariumPI.config.InvalidConfigException
 
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -39,12 +40,28 @@ class Timer(pigpio: JPigpio, config: Config) {
       .map(timerRelaysToMap)                           //Try[Map[String,TimerRelay]]
   }
 
+  def update(config: Config) {
+    val mapTry = parseConfig(config)
+    if (mapTry.isSuccess) {
+        mapTry.get.foreach({ case (name, timerRelay) => replacePattern(timerRelay, timers)})
+    }
+  }
+
+  private[this] def replacePattern(timerRelay: TimerRelay, map: Map[String, (TimerRelay, Controller)]) {
+    val (oldTimerRelay, oldController) = map(timerRelay.name)
+    oldTimerRelay.calculator.update(timerRelay.pattern)
+  }
+
   private[this] def getConfig(config: Config) : Try[TimerConfig] = {
+    implicit val patternHint = new FieldCoproductHint[Pattern]("type") {
+      override def fieldValue(name: String) = name.toLowerCase.dropRight("Pattern".length)
+    }
+    implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
     implicit val localTimeInstancce = localTimeConfigConvert(DateTimeFormatter.ISO_TIME)
     implicit val timeDoubleConverter = new TimeDoubleConverter()
     val timerConfig: Either[ConfigReaderFailures, TimerConfig] = loadConfig[TimerConfig](config.getConfig("timer"))
     timerConfig match {
-      case Left(error)        => Failure(new Exception("Timer config load exception"))
+      case Left(error)        => Failure(new InvalidConfigException("Invalid timer config - " + error))
       case Right(timerConfig) => Success(timerConfig)
     }
   }

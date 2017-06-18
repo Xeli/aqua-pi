@@ -4,7 +4,7 @@ import java.time._
 import java.time.temporal.ChronoUnit
 
 class Moments(pattern: Seq[(LocalTime, Double)]) {
-  var sections:Seq[Section] = convertToSections(pattern)
+  val sections:Seq[Section] = convertToSections(pattern)
 
   case class Moment(time: LocalTime, value: Double)
   case class Section(from: Moment, to: Moment) {
@@ -25,10 +25,6 @@ class Moments(pattern: Seq[(LocalTime, Double)]) {
     val moments = pattern.map({ case (time, value) => Moment(time, value) })
     val momentTuples = moments zip moments.tail
     momentTuples.map({ case (x,y) => Section(x,y)})
-  }
-
-  def update(pattern: Seq[(LocalTime, Double)]) {
-    sections = convertToSections(pattern);
   }
 
   def getValue(time: LocalTime, default: Double = 0): Double = {
