@@ -1,5 +1,3 @@
-import Dependencies._
-
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
@@ -11,8 +9,10 @@ lazy val root = (project in file(".")).
     mainClass in (Compile, run) := Some("eu.xeli.aquariumPI.App"),
     sbtavrohugger.SbtAvrohugger.specificAvroSettings,
     libraryDependencies ++= Seq(
-      scalaTest % Test,
+      "org.scalactic" %% "scalactic" % "3.0.1",
+      "org.scalatest" %% "scalatest" % "3.0.1",
       "com.typesafe" % "config" % "1.3.1",
+      "org.scalamock" % "scalamock-scalatest-support_2.12" % "3.6.0",
       "org.apache.avro" % "avro" % "1.8.2",
       "ch.qos.logback" % "logback-classic" % "1.1.7",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
