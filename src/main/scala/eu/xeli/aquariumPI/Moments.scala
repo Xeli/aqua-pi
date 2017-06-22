@@ -10,12 +10,12 @@ class Moments(pattern: Seq[(LocalTime, Double)]) {
   case class Section(from: Moment, to: Moment) {
     val durationInSeconds = from.time.until(to.time, ChronoUnit.SECONDS)
     def intersects(time: LocalTime): Boolean = {
-      time.isAfter(from.time) && time.isBefore(to.time)
+      time.isAfter(from.time) && (time.isBefore(to.time) || time.equals(to.time))
     }
 
     def getValue(time: LocalTime): Double = {
-      val secondsAfterFrom = from.time.until(time, ChronoUnit.SECONDS)
-      val percentage = secondsAfterFrom.toDouble / durationInSeconds
+      val secondsAfterFrom: Double = from.time.until(time, ChronoUnit.SECONDS)
+      val percentage: Double = secondsAfterFrom / durationInSeconds
 
       from.value + ( (to.value - from.value) * percentage )
     }
