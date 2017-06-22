@@ -20,7 +20,7 @@ class GatherMetrics(servers: Servers, light: Light, ato: Ato) extends Runnable {
 
     //gather data and serialize
     val avroLights = light.channels
-      .mapValues({ case (lightChannel, controller) => controller.currentValue})
+      .mapValues({ case (lightChannel, controller) => controller.getCurrentValue})
       .map({case (name, value) => AvroLight(name, value)})
       .to[List]
     val waterLevel = ato.waterLevel
