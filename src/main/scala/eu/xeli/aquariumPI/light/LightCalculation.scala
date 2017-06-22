@@ -18,9 +18,10 @@ import LightCalculation._
  * If you ask for the light intensity at 9 o'clock it would give back 50%
  *
  */
-class LightCalculation(priority: Int, var pattern: LightPattern) extends Controllee(priority) {
+class LightCalculation(priority: Int, var pattern: LightPattern) extends Controllee {
   var moments = new Moments(pattern)
 
+  def getPriority(): Int = priority
   def getFrequency(): Int = 5
 
   def update(newPattern: Seq[(LocalTime, Double)]) = {
