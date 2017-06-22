@@ -21,5 +21,6 @@ lazy val root = (project in file(".")).
       "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
       "com.github.pureconfig" %% "pureconfig" % "0.7.2"
     ),
-    resolvers += "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
+    resolvers += "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging",
+    cancelable in Global := true
   )
