@@ -4,16 +4,22 @@ import eu.xeli.aquariumPI.Server
 import eu.xeli.jpigpio.JPigpio
 import eu.xeli.jpigpio.PigpioException
 
-class Pwm(pigpio: JPigpio, pin: Int) {
-  val Range = 250
-  val Frequency = 100
+import com.typesafe.scalalogging.Logger
 
+class Pwm(pigpio: JPigpio, pin: Int) {
+  val logger = Logger[Pwm]
+  val range = 250
+  val frequency = 100
+
+  logger.debug(s"Initialize PWM at pin: $pin with frequency: $frequency and range: $range")
   pigpio.gpioSetMode(pin, JPigpio.PI_OUTPUT)
-  pigpio.setPWMRange(pin, Range)
-  pigpio.setPWMFrequency(pin, Frequency)
+  pigpio.setPWMRange(pin, range)
+  pigpio.setPWMFrequency(pin, frequency)
 
   def set(percentage: Double) {
-    val dutycycle = Math.round(Range * (percentage / Frequency)).toInt
+    val dutycycle = Math.round(range * (percentage / frequency)).toInt
+    logger.debug(s"Setting PWM dutycycle at: $dutycycle")
+
     pigpio.setPWMDutycycle(pin, dutycycle)
   }
 
