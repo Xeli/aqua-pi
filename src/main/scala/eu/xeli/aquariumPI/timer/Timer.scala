@@ -28,7 +28,7 @@ class Timer(pigpio: JPigpio, config: Config) {
 
   //initial parsing of config
   val timers: (Map[String, (TimerRelay, Controller)]) = parseConfig(config) match {
-    case Success(timerRelayMap) => timerRelayMap.mapValues(timerRelay=> (timerRelay, setupController(timerRelay)))
+    case Success(timerRelayMap) => timerRelayMap.map({ case (key, timerRelay) => (key, (timerRelay, setupController(timerRelay)))})
     case Failure(e)               => throw e
   }
 
@@ -87,7 +87,7 @@ class Timer(pigpio: JPigpio, config: Config) {
    * Setting up the controllers
    */
   private[this] def setupController(timerRelay: TimerRelay): Controller = {
-    val controller = new Controller(timerRelay.relay, false)
+    val controller = new Controller(timerRelay.relay, None)
     controller.addControllee(timerRelay.calculator)
     controller
   }
