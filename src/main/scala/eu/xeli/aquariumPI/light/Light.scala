@@ -26,7 +26,8 @@ class Light(pigpio: JPigpio, config: Config) {
   case class LightChannelConfig(name: String, pattern: LightPattern, pins: List[Int])
 
   val channels: (Map[String, (LightChannel, Controller)]) = parseConfig(config) match {
-    case Success(lightChannelMap) => lightChannelMap.mapValues(channel => (channel, setupController(channel)))
+    case Success(lightChannelMap) =>
+      lightChannelMap.map({ case (key, channel) => (key, (channel, setupController(channel)))})
     case Failure(e)               => throw new InvalidConfigException("Invalid light config", e)
   }
 
@@ -72,8 +73,10 @@ class Light(pigpio: JPigpio, config: Config) {
    * Setting up the controllers
    */
   private[this] def setupController(channel: LightChannel): Controller = {
-    val controller = new Controller(channel.pins, true, maxOffset = 10, secondsToTransition = 1)
+    val easerDuration = Some(Duration.ofSeconds(1))
+    val controller = new Controller(channel.pins, easerDuration)
     controller.addControllee(channel.calculator)
+    controller.start()
     controller
   }
 

@@ -89,6 +89,7 @@ class Timer(pigpio: JPigpio, config: Config) {
   private[this] def setupController(timerRelay: TimerRelay): Controller = {
     val controller = new Controller(timerRelay.relay, None)
     controller.addControllee(timerRelay.calculator)
+    controller.start()
     controller
   }
 }

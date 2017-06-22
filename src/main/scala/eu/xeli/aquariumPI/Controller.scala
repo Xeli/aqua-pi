@@ -2,6 +2,7 @@ package eu.xeli.aquariumPI
 
 import collection.mutable.PriorityQueue
 import java.util.concurrent._
+import java.time._
 
 /*
  *
@@ -22,50 +23,40 @@ import java.util.concurrent._
  *    the actual step size can be given as parameter in the constructor, maxOffset.
  *    This max offset determines how much the value can vary between steps
  */
-class Controller(output: Output, enableEasing: Boolean, maxOffset: Double = 10.0, secondsToTransition: Int = 1) extends Runnable {
-  val controllees = PriorityQueue[Controllee]()
+class Controller(output: Output, easerDuration: Option[Duration]) extends Runnable {
+  private[this] val controllees = PriorityQueue[Controllee]()
 
   @volatile
-  var currentValue:Double = output.getValue()
+  private[this] var currentValue:Double = output.getValue()
+
+  private[this] val executor = new ScheduledThreadPoolExecutor(1)
 
   @volatile
-  var updateFrequency = 5
+  private[this] var future: ScheduledFuture[_] = null
 
-  val executor = new ScheduledThreadPoolExecutor(1)
-  @volatile
-  var future = executor.scheduleAtFixedRate(this, updateFrequency, updateFrequency, TimeUnit.SECONDS)
+  private[this] var easer: Easer       = null
+  private[this] var startTime: Long    = 0
+  private[this] var startValue: Double = 0
+  private[this] var endValue: Double   = 0
 
-  var easing = false
-  var startTime:Long = 0
-  var startValue:Double = 0
-  var endValue:Double = 0
+  def run() {
+    val delta = getCurrentTarget() - currentValue
+    if (delta < MagicValues.DOUBLE_TOLERANCE) {
+      return
+    }
 
-  def changeUpdateFrequency(period: Int, unit: TimeUnit) {
-      future.cancel(true)
-      future = executor.scheduleAtFixedRate(this, 0, period, unit)
-      updateFrequency = period
-  }
+    //check if this controller does not require an easer
+    if (easerDuration.isEmpty) {
+      setValue(currentValue + delta)
+    } else {
+      runEaser(easerDuration.get)
+    }
 
-  def resetUpdateFrequency() {
-    val smallestFrequency = controllees.map(_.getFrequency()).min
-    changeUpdateFrequency(smallestFrequency, TimeUnit.SECONDS)
   }
 
   def addControllee(controllee: Controllee) {
     controllees.enqueue(controllee)
     resetUpdateFrequency()
-  }
-
-  def getFirstActivatedControllee(): Option[Controllee] = {
-    val controlleesClone = controllees.clone
-    var best:Option[Controllee] = None
-    while(!controlleesClone.isEmpty && best == null) {
-      val controllee = controllees.dequeue
-      if (controllee.activated) {
-        best = Some(controllee)
-      }
-    }
-    best
   }
 
   def getCurrentTarget(): Double = {
@@ -75,37 +66,55 @@ class Controller(output: Output, enableEasing: Boolean, maxOffset: Double = 10.0
     }
   }
 
-  def run() {
-    val delta = getCurrentTarget() - currentValue
+  def getCurrentValue: Double = currentValue
 
-    if (Math.abs(delta) < maxOffset) {
-      setValue(currentValue + delta)
-      easing = false
+  def start() {
+    changeUpdateFrequency(5, TimeUnit.SECONDS)
+  }
+
+  private[this] def changeUpdateFrequency(period: Int, unit: TimeUnit) {
+      if (future != null) {
+        future.cancel(true)
+      }
+      future = executor.scheduleAtFixedRate(this, 0, period, unit)
+  }
+
+  private[this] def resetUpdateFrequency() {
+    if (controllees.length == 0) {
       return
     }
+    val smallestFrequency = controllees.map(_.getFrequency()).min
+    changeUpdateFrequency(smallestFrequency, TimeUnit.SECONDS)
+  }
 
-    if(!easing) {
-      easing = true
-      startTime = System.currentTimeMillis()
-      startValue = currentValue
-      endValue = getCurrentTarget()
+  private[this] def getFirstActivatedControllee(): Option[Controllee] = {
+    val controlleesClone = controllees.clone
+    var best:Option[Controllee] = None
+    while(!controlleesClone.isEmpty && best == None) {
+      val controllee = controlleesClone.dequeue
+      if (controllee.activated) {
+        best = Some(controllee)
+      }
+    }
+    best
+  }
+
+  private[this] def runEaser(easerDuration: Duration) {
+    if (easer == null) {
+      easer = Easer(easerDuration, LocalTime.now, currentValue, getCurrentTarget())
       changeUpdateFrequency(200, TimeUnit.MILLISECONDS)
     }
 
-    setValue(getEasingValue())
-    if(Math.abs(currentValue - endValue) < maxOffset) {
-      easing = false
+    if (easer.isFinished(currentValue)) {
       resetUpdateFrequency()
+      easer = null
+    } else {
+      val easerValue = easer.getValue(LocalTime.now)
+      setValue(easerValue)
     }
   }
 
-  def getEasingValue():Double = {
-    val unixTime = System.currentTimeMillis()
-    val percentage = (unixTime - startTime) / (secondsToTransition * 1000.0)
-    startValue + ((endValue - startValue) * Math.min(percentage, 1))
-  }
-
-  def setValue(value: Double, force: Boolean = false) {
+  private[this] def setValue(value: Double, force: Boolean = false) {
     if (currentValue != value || force) {
       output.setValue(value)
       currentValue = value
