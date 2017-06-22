@@ -40,18 +40,11 @@ class Controller(output: Output, easerDuration: Option[Duration]) extends Runnab
   private[this] var endValue: Double   = 0
 
   def run() {
-    val delta = getCurrentTarget() - currentValue
-    if (delta < MagicValues.DOUBLE_TOLERANCE) {
-      return
-    }
-
-    //check if this controller does not require an easer
     if (easerDuration.isEmpty) {
-      setValue(currentValue + delta)
+      setValue(getCurrentTarget())
     } else {
       runEaser(easerDuration.get)
     }
-
   }
 
   def addControllee(controllee: Controllee) {
@@ -100,6 +93,11 @@ class Controller(output: Output, easerDuration: Option[Duration]) extends Runnab
   }
 
   private[this] def runEaser(easerDuration: Duration) {
+    val valueEqual = Math.abs(currentValue - getCurrentTarget()) < MagicValues.DOUBLE_TOLERANCE
+    if (easer == null && valueEqual) {
+      //no easer active and we don't need any easing
+      return
+    }
     if (easer == null) {
       easer = Easer(easerDuration, LocalTime.now, currentValue, getCurrentTarget())
       changeUpdateFrequency(200, TimeUnit.MILLISECONDS)
@@ -115,7 +113,9 @@ class Controller(output: Output, easerDuration: Option[Duration]) extends Runnab
   }
 
   private[this] def setValue(value: Double, force: Boolean = false) {
-    if (currentValue != value || force) {
+    //equal for doubles
+    val valueNotEqual = Math.abs(currentValue - value) > MagicValues.DOUBLE_TOLERANCE
+    if (valueNotEqual || force) {
       output.setValue(value)
       currentValue = value
     }
