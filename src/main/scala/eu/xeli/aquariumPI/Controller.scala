@@ -62,7 +62,7 @@ class Controller(output: Output, easerDuration: Option[Duration]) extends Runnab
   def getCurrentValue: Double = currentValue
 
   def start() {
-    changeUpdateFrequency(5, TimeUnit.SECONDS)
+    resetUpdateFrequency()
   }
 
   private[this] def changeUpdateFrequency(period: Int, unit: TimeUnit) {

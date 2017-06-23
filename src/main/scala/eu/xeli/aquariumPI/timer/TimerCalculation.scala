@@ -7,21 +7,24 @@ import java.time._
 import scala.concurrent.duration._
 
 class TimerCalculation(priority: Int, var pattern: Pattern) extends Controllee {
-  var moments = pattern match {
-    case timePattern: TimePattern => new Moments(timePattern.pattern)
-    case _ => null
-  }
+  private[this] var frequency = 5
+  private[this] var moments:Moments = null
+
+  update(pattern)
 
   def getPriority(): Int = priority
-  def getFrequency(): Int = 5
+  def getFrequency(): Int = frequency
 
   def update(newPattern: Pattern) {
+    pattern = newPattern
     newPattern match {
       case timePattern: TimePattern => {
         moments = new Moments(timePattern.pattern)
-        pattern = newPattern
+        frequency = 5
       }
-      case intervalPattern: IntervalPattern => pattern = newPattern
+      case intervalPattern: IntervalPattern => {
+        frequency = intervalPattern.intervalDuration.toSeconds.toInt
+      }
     }
   }
 
