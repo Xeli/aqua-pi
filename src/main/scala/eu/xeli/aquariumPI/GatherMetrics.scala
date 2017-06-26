@@ -1,30 +1,34 @@
 package eu.xeli.aquariumPI
 
+import eu.xeli.aquariumPI.timer.Relays
 import eu.xeli.aquariumPI.light.{Light, LightMetric}
-import eu.xeli.aquariumPI.avro.{Metric => AvroMetric, Light => AvroLight}
+import eu.xeli.aquariumPI.avro.{Metric => AvroMetric, Light => AvroLight, Relay => AvroRelay}
 
 import java.time._
+import java.util.concurrent._
 
 import org.apache.avro.io.EncoderFactory
 import org.apache.avro.specific.SpecificDatumWriter
 import java.io._
 
-class GatherMetrics(servers: Servers, light: Light, ato: Ato) extends Runnable {
+class GatherMetrics(servers: Servers, ato: Option[Ato], temperature: Option[Double], ph: Option[Ph], light: Option[Light], relays: Option[Relays]) extends Runnable {
 
-  case class Metrics(unixTimestamp: Int,
-                     light: LightMetric,
-                     waterLevel: Double)
+  def start() {
+    val executor = new ScheduledThreadPoolExecutor(1)
+    executor.scheduleAtFixedRate(this, 0, 30, TimeUnit.SECONDS)
+  }
 
   def run() {
     val timestamp = Instant.now().getEpochSecond()
 
-    //gather data and serialize
-    val avroLights = light.channels
-      .mapValues({ case (lightChannel, controller) => controller.getCurrentValue})
-      .map({case (name, value) => AvroLight(name, value)})
-      .to[List]
-    val waterLevel = ato.waterLevel
-    val avroMetric = AvroMetric(timestamp, ato.waterLevel, avroLights)
+    val avroMetric = AvroMetric(
+      timestamp,
+      ato.map(_.waterLevel),
+      None,
+      None,
+      light.map(gatherLightData),
+      relays.map(gatherRelaysData)
+    )
 
     //serialize to byte[]
     val out = new ByteArrayOutputStream()
@@ -35,6 +39,18 @@ class GatherMetrics(servers: Servers, light: Light, ato: Ato) extends Runnable {
     encoder.flush()
     out.close()
     val message = out.toByteArray()
+  }
+
+  private[this] def gatherLightData(light: Light): List[AvroLight] = {
+    light.channels.map {
+      case (name, (_channel, controller)) => AvroLight(name, controller.getCurrentValue)
+    }.to[List]
+  }
+
+  private[this] def gatherRelaysData(relays: Relays): List[AvroRelay] = {
+    relays.map.map {
+      case (name, relay) => AvroRelay(name, relay.getValue())
+    }.to[List]
   }
 
 }

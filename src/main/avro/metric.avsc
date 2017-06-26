@@ -4,8 +4,10 @@
   "name": "Metric",
   "fields": [
     {"name": "time", "type": "long"},
-    {"name": "waterLevel", "type": "double"},
-    {"name": "light", "type": {
+    {"name": "temperature", "type": ["null", "double"]},
+    {"name": "ph", "type": ["null", "double"]},
+    {"name": "waterLevel", "type": ["null", "double"]},
+    {"name": "light", "type": ["null", {
       "type": "array",
       "items": {
         "name": "Light",
@@ -15,7 +17,18 @@
           {"name": "value", "type": "double"}
         ]
       }
-    }}
+    }]},
+    {"name": "relays", "type": ["null", {
+      "type": "array",
+      "items": {
+        "name": "Relay",
+        "type": "record",
+        "fields": [
+          {"name": "name", "type": "string"},
+          {"name": "value", "type": "double"}
+        ]
+      }
+    }]}
   ]
 }
 

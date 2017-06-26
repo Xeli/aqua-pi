@@ -3,8 +3,10 @@ package eu.xeli.aquariumPI
 import eu.xeli.aquariumPI._
 import eu.xeli.aquariumPI.light.Light
 import eu.xeli.aquariumPI.timer.Timer
+import eu.xeli.aquariumPI.timer.Relays
 import eu.xeli.aquariumPI.gpio.Pigpio
 import eu.xeli.aquariumPI.config.InvalidConfigException
+import eu.xeli.aquariumPI.config.{Relays => RelaysConfigFactory}
 
 import eu.xeli.jpigpio.JPigpio
 import collection.JavaConverters._
@@ -12,6 +14,7 @@ import com.typesafe.config._
 import java.util.concurrent._
 import java.io.File
 import java.nio.file.Paths
+import scala.util.{Try, Success, Failure}
 
 /**
  * @author ${user.name}
@@ -35,8 +38,15 @@ object App {
       //adjust light every 30 seconds
       val light = new Light(pigpio, conf)
 
-      //set timers on the relays
-      val timer = new Timer(pigpio, conf)
+      val relaysConfigTry = RelaysConfigFactory.get(conf.getConfig("relays"))
+      val (relays, timer) = relaysConfigTry match {
+        case Failure(e) => throw e
+        case Success(relaysConfig) => {
+          val relays = Relays(pigpio, relaysConfig)
+          val timer = new Timer(pigpio, conf, relays)
+          (relays, timer)
+        }
+      }
 
       //ph
       val ph = new Ph(servers.pigpio, maybeConfigDir, 0x4D, 1)
@@ -65,7 +75,7 @@ object App {
     //gets the application.conf from jar resources
     val baseConfig = ConfigFactory.load().getConfig("aquaPI")
 
-    val configsFilename = Seq("light.conf", "timer.conf", "servers.conf")
+    val configsFilename = Seq("light.conf", "relays.conf", "servers.conf")
     configDir match {
       case Some(configDirString) => {
         val configsPath = configsFilename.map(configDirString + "/" + _)
