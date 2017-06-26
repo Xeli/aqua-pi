@@ -7,6 +7,7 @@ import eu.xeli.aquariumPI.timer.Relays
 import eu.xeli.aquariumPI.gpio.Pigpio
 import eu.xeli.aquariumPI.config.InvalidConfigException
 import eu.xeli.aquariumPI.config.{Relays => RelaysConfigFactory}
+import eu.xeli.aquariumPI.config.ServersConfig
 
 import eu.xeli.jpigpio.JPigpio
 import collection.JavaConverters._
@@ -26,7 +27,7 @@ object App {
     val maybeConfigDir = args.headOption
 
     val conf = getConfig(maybeConfigDir)
-    val servers = getServers(conf)
+    val servers = ServersConfig.get(conf)
     val pigpio = Pigpio.getInstance(servers.pigpio)
 
     try {
@@ -91,14 +92,5 @@ object App {
     val config = ConfigFactory.parseFile(file)
 
     config.withFallback(baseConfig)
-  }
-
-  def getServers(conf: Config): Servers = {
-    val kafka = new Server(conf.getString("servers.kafka.host"), conf.getInt("servers.kafka.port"))
-
-    val pigpioHost = conf.getString("servers.pigpio.host")
-    val pigpioPort = conf.getInt("servers.pigpio.port")
-    val pigpio = new Server(pigpioHost, pigpioPort)
-    new Servers(pigpio, kafka)
   }
 }
