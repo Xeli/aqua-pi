@@ -1,3 +1,3 @@
 package eu.xeli.aquariumPI
 
-case class Servers(pigpio: Server, kafka: Server)
+case class Servers(pigpio: Server, aquaStatus: Server)
