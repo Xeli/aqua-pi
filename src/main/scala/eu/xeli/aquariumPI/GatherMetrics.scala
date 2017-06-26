@@ -10,8 +10,9 @@ import java.util.concurrent._
 import org.apache.avro.io.EncoderFactory
 import org.apache.avro.specific.SpecificDatumWriter
 import java.io._
+import scalaj.http.Http
 
-class GatherMetrics(servers: Servers, ato: Option[Ato], temperature: Option[Double], ph: Option[Ph], light: Option[Light], relays: Option[Relays]) extends Runnable {
+class GatherMetrics(aquaStatus: Server, ato: Option[Ato], temperature: Option[Double], ph: Option[Ph], light: Option[Light], relays: Option[Relays]) extends Runnable {
 
   def start() {
     val executor = new ScheduledThreadPoolExecutor(1)
@@ -39,6 +40,21 @@ class GatherMetrics(servers: Servers, ato: Option[Ato], temperature: Option[Doub
     encoder.flush()
     out.close()
     val message = out.toByteArray()
+
+    aquaStatus.auth match {
+      case None => throw new IllegalArgumentException("no auth information for aqua status")
+      case Some(auth) => {
+        val hostname = aquaStatus.host + ":" + aquaStatus.port
+        val responseCode = Http(hostname + "/metrics")
+          .method("PUT")
+          .auth(auth.username, auth.password)
+          .header("content-type", "application/avro")
+          .postData(message)
+          .asString.code
+
+        println(responseCode)
+      }
+    }
   }
 
   private[this] def gatherLightData(light: Light): List[AvroLight] = {

@@ -21,6 +21,7 @@ lazy val root = (project in file(".")).
       "org.scalanlp" %% "breeze" % "0.13.1",
       "org.scalanlp" %% "breeze-natives" % "0.13.1",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
+      "org.scalaj" %% "scalaj-http" % "2.3.0",
       "com.github.pureconfig" %% "pureconfig" % "0.7.2"
     ),
     resolvers += "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
