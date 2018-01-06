@@ -50,7 +50,7 @@ class Timer(pigpio: JPigpio, config: Config, relays: Relays) {
 
   private[this] def timerRelaysToMap(timerRelays: List[TimerRelay]): Map[String, TimerRelay] = {
     val hashmap = HashMap[String, TimerRelay]()
-    timerRelays.foldLeft(hashmap)(((map, timerRelay) => map + (timerRelay.name -> timerRelay)))
+    timerRelays.foldLeft(hashmap)((map, timerRelay) => map + (timerRelay.name -> timerRelay))
   }
 
   /*

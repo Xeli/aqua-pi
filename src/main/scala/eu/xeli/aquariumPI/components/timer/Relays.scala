@@ -14,7 +14,7 @@ case class Relays(map: Map[String, Relay]) {
 object Relays {
   def apply(pigpio: JPigpio, config: RelaysConfig): Relays = {
     val hashmap = HashMap[String, Relay]()
-    val map = config.relays.foldLeft(hashmap)(((map, relayConfig) => map + (relayConfig.name -> getRelay(pigpio, relayConfig))))
+    val map = config.relays.foldLeft(hashmap)((map, relayConfig) => map + (relayConfig.name -> getRelay(pigpio, relayConfig)))
     Relays(map)
   }
 

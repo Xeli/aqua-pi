@@ -2,12 +2,12 @@ package eu.xeli.aquariumPI.light
 
 import LightCalculation.LightPattern
 import eu.xeli.aquariumPI.gpio.PwmGroup
-import eu.xeli.aquariumPI.Controller
+import eu.xeli.aquariumPI.{Component, Controller}
 import eu.xeli.aquariumPI.config.pureconfig.TimeDoubleConverter
 import eu.xeli.aquariumPI.config.InvalidConfigException
 
 import scala.collection.immutable.HashMap
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 import java.util.concurrent._
 import java.time._
 
@@ -20,7 +20,7 @@ import pureconfig.error.ConfigReaderFailures
  * This class drives the lights by using pwms
  * The lights configuration is retrieved from a config file
  */
-class Light(pigpio: JPigpio, config: Config) {
+class Light(pigpio: JPigpio, config: Config) extends Component {
   case class LightChannel(name: String, pattern: LightPattern, pins: PwmGroup, calculator: LightCalculation)
   case class LightConfig(channels: List[LightChannelConfig])
   case class LightChannelConfig(name: String, pattern: LightPattern, pins: List[Int])
@@ -29,6 +29,14 @@ class Light(pigpio: JPigpio, config: Config) {
     case Success(lightChannelMap) =>
       lightChannelMap.map({ case (key, channel) => (key, (channel, setupController(channel)))})
     case Failure(e)               => throw new InvalidConfigException("Invalid light config", e)
+  }
+
+  def start(): Unit = {
+    channels.foreach(element => element._2._2.start())
+  }
+
+  def stop(): Unit = {
+    channels.foreach(element => element._2._2.stop())
   }
 
   def update(newConfig: Config) {
@@ -66,7 +74,7 @@ class Light(pigpio: JPigpio, config: Config) {
 
   private[this] def lightChannelsToMap(lightChannels: List[LightChannel]): Map[String, LightChannel] = {
     val hashmap = HashMap[String, LightChannel]()
-    lightChannels.foldLeft(hashmap)(((map, channel) => map + (channel.name -> channel)))
+    lightChannels.foldLeft(hashmap)((map, channel) => map + (channel.name -> channel))
   }
 
   /*
@@ -76,7 +84,6 @@ class Light(pigpio: JPigpio, config: Config) {
     val easerDuration = Some(Duration.ofSeconds(1))
     val controller = new Controller(channel.pins, easerDuration)
     controller.addControllee(channel.calculator)
-    controller.start()
     controller
   }
 
