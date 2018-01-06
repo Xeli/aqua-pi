@@ -1,7 +1,6 @@
-package eu.xeli.aquariumPI
+package eu.xeli.aquariumPI.components
 
 trait Component {
   def start()
   def stop()
-  def update()
 }
