@@ -1,6 +1,6 @@
 package eu.xeli.aquariumPI.config
 
-import eu.xeli.aquariumPI.timer.Pattern
+import eu.xeli.aquariumPI.components.timer.Pattern
 import eu.xeli.aquariumPI.config.pureconfig.TimeDoubleConverter
 
 import java.time.format.DateTimeFormatter
@@ -24,7 +24,7 @@ object Relays {
     implicit val patternHint = new FieldCoproductHint[Pattern]("type") {
       override def fieldValue(name: String) = name.toLowerCase.dropRight("Pattern".length)
     }
-    implicit val localTimeInstancce = localTimeConfigConvert(DateTimeFormatter.ISO_TIME)
+    implicit val localTimeInstance = localTimeConfigConvert(DateTimeFormatter.ISO_TIME)
     implicit val timeDoubleConverter = new TimeDoubleConverter()
 
     //parse the config

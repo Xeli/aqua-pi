@@ -1,15 +1,18 @@
-package eu.xeli.aquariumPI
+package eu.xeli.aquariumPI.components
 
-import gpio.I2c
+import java.io.File
+
 import breeze.linalg.{DenseMatrix, DenseVector}
 import breeze.stats.regression.leastSquares
 import com.typesafe.config._
-import java.io.File
+import eu.xeli.aquariumPI.ConfigUtils
+import eu.xeli.aquariumPI.gpio.I2c
+import eu.xeli.jpigpio.JPigpio
 
-class Ph(server: Server, maybeConfigPath: Option[String], i2cAddress: Int, i2cBusNumber: Int) {
+class Ph(pigpio: JPigpio, maybeConfigPath: Option[String], i2cAddress: Int, i2cBusNumber: Int) {
   type CalibrationPoints = Seq[(Double, Double)]
 
-  val i2c = new I2c(server, i2cAddress, i2cBusNumber)
+  val i2c = new I2c(pigpio, i2cAddress, i2cBusNumber)
   val defaultCalibrationPoints = Seq((0.0, 0.0), (1.0, 1.0))
 
   var calibrationPoints = readFromFile(maybeConfigPath)

@@ -1,4 +1,4 @@
-package eu.xeli.aquariumPI.timer
+package eu.xeli.aquariumPI.components.timer
 
 import eu.xeli.aquariumPI.Controller
 import eu.xeli.aquariumPI.gpio.Relay
@@ -22,11 +22,11 @@ class Timer(pigpio: JPigpio, config: Config, relays: Relays) {
   }
 
   def parseConfig(config: Config): Try[Map[String, TimerRelay]] = {
-    RelaysConfigFactory.get(config)              //Try[RelaysConfig]
-      .map(_.relays)                             //Try[List[RelayConfig]]
-      .map(_.filter(_.pattern.isEmpty == false)) //Try[List[RelayConfig]]
-      .map(_.map(relayConfigToTimerRelay))       //Try[List[TimerRelay]]
-      .map(timerRelaysToMap)                     //Try[Map[String,TimerRelay]]
+    RelaysConfigFactory.get(config.getConfig("relays")) //Try[RelaysConfig]
+      .map(_.relays)                                    //Try[List[RelayConfig]]
+      .map(_.filter(_.pattern.isEmpty == false))        //Try[List[RelayConfig]]
+      .map(_.map(relayConfigToTimerRelay))              //Try[List[TimerRelay]]
+      .map(timerRelaysToMap)                            //Try[Map[String,TimerRelay]]
   }
 
   def update(config: Config) {

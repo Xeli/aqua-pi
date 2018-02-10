@@ -1,8 +1,7 @@
 package eu.xeli.aquariumPI
 
-import org.scalatest._
 import org.scalamock.scalatest.MockFactory
-import java.time._
+import org.scalatest._
 
 class ControllerSpec extends FlatSpec with Matchers with MockFactory {
   "A controller" should "give back the correct target value" in {

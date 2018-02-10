@@ -1,10 +1,8 @@
 package eu.xeli.aquariumPI.gpio
 
-import eu.xeli.aquariumPI.Server
 import eu.xeli.jpigpio.JPigpio
 
-class I2c(server: Server, address: Int, bus: Int) {
-  val pigpio = Pigpio.getInstance(server)
+class I2c(pigpio: JPigpio, address: Int, bus: Int) {
   val handle = pigpio.i2cOpen(bus, address)
 
   def getValue(numberOfBytes: Int): Double = {

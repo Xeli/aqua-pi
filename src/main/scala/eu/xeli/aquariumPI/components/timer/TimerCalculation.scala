@@ -1,4 +1,4 @@
-package eu.xeli.aquariumPI.timer
+package eu.xeli.aquariumPI.components.timer
 
 import eu.xeli.aquariumPI.Controllee
 import eu.xeli.aquariumPI.Moments

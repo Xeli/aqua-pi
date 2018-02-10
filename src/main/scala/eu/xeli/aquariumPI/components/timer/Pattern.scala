@@ -1,4 +1,4 @@
-package eu.xeli.aquariumPI.timer
+package eu.xeli.aquariumPI.components.timer
 
 import java.time.LocalTime
 import scala.concurrent.duration._

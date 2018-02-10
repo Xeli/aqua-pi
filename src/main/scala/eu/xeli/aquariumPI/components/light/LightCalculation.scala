@@ -1,4 +1,4 @@
-package eu.xeli.aquariumPI.light
+package eu.xeli.aquariumPI.components.light
 
 import eu.xeli.aquariumPI.Moments
 

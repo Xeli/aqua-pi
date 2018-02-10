@@ -65,11 +65,15 @@ class Controller(output: Output, easerDuration: Option[Duration]) extends Runnab
     resetUpdateFrequency()
   }
 
+  def stop(): Unit = {
+    if (future != null) {
+      future.cancel(true)
+    }
+  }
+
   private[this] def changeUpdateFrequency(period: Int, unit: TimeUnit) {
-      if (future != null) {
-        future.cancel(true)
-      }
-      future = executor.scheduleAtFixedRate(this, 0, period, unit)
+    stop()
+    future = executor.scheduleAtFixedRate(this, 0, period, unit)
   }
 
   private[this] def resetUpdateFrequency() {

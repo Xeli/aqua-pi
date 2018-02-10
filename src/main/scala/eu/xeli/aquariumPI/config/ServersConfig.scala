@@ -13,7 +13,7 @@ object ServersConfig {
     implicit def hint[T] = ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
 
     //parse the config
-    val serversConfig: Either[ConfigReaderFailures, Servers] = loadConfig[Servers](config)
+    val serversConfig: Either[ConfigReaderFailures, Servers] = loadConfig[Servers](config.getConfig("servers"))
     serversConfig match {
       case Left(error)        => throw new InvalidConfigException("Invalid servers config - " + error)
       case Right(servers) => servers 

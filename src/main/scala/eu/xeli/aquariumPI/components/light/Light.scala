@@ -1,8 +1,8 @@
-package eu.xeli.aquariumPI.light
+package eu.xeli.aquariumPI.components.light
 
 import LightCalculation.LightPattern
 import eu.xeli.aquariumPI.gpio.PwmGroup
-import eu.xeli.aquariumPI.{Component, Controller}
+import eu.xeli.aquariumPI.Controller
 import eu.xeli.aquariumPI.config.pureconfig.TimeDoubleConverter
 import eu.xeli.aquariumPI.config.InvalidConfigException
 
@@ -13,6 +13,7 @@ import java.time._
 
 import eu.xeli.jpigpio.JPigpio
 import com.typesafe.config._
+import eu.xeli.aquariumPI.components.Component
 import pureconfig._
 import pureconfig.error.ConfigReaderFailures
 

@@ -1,15 +1,17 @@
 package eu.xeli.aquariumPI
 
-import eu.xeli.aquariumPI.timer.Relays
-import eu.xeli.aquariumPI.light.{Light, LightMetric}
-import eu.xeli.aquariumPI.avro.{Metric => AvroMetric, Light => AvroLight, Relay => AvroRelay}
-
+import eu.xeli.aquariumPI.components.timer.Relays
+import eu.xeli.aquariumPI.components.light.{Light, LightMetric}
+import eu.xeli.aquariumPI.avro.{Light => AvroLight, Metric => AvroMetric, Relay => AvroRelay}
 import java.time._
 import java.util.concurrent._
 
 import org.apache.avro.io.EncoderFactory
 import org.apache.avro.specific.SpecificDatumWriter
 import java.io._
+
+import eu.xeli.aquariumPI.components.{Ato, Ph}
+
 import scalaj.http.Http
 
 class GatherMetrics(aquaStatus: Server, ato: Option[Ato], temperature: Option[Double], ph: Option[Ph], light: Option[Light], relays: Option[Relays]) extends Runnable {

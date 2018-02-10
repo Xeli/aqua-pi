@@ -1,4 +1,4 @@
-package eu.xeli.aquariumPI.timer
+package eu.xeli.aquariumPI.components.timer
 
 import eu.xeli.aquariumPI.gpio.Relay
 import eu.xeli.aquariumPI.config.RelayConfig

@@ -1,8 +1,8 @@
-package eu.xeli.aquariumPI
+package eu.xeli.aquariumPI.components
 
-import gpio.{Relay, Listener}
+import java.time.Duration
 
-import java.time.{Duration}
+import eu.xeli.aquariumPI.gpio.{Listener, Relay}
 import eu.xeli.jpigpio.JPigpio
 
 class Ato(pigpio: JPigpio, waterLevelSensorPin: Int, pumpPin: Int) extends Component {
@@ -24,9 +24,9 @@ class Ato(pigpio: JPigpio, waterLevelSensorPin: Int, pumpPin: Int) extends Compo
 
   def handleChange = (level: Double) => {
     if (running) {
-      pump.disable()
-    } else {
       processWaterLevel(level)
+    } else {
+      pump.disable()
     }
   }
 

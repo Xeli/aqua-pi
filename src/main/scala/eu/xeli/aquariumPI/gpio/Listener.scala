@@ -1,9 +1,8 @@
 package eu.xeli.aquariumPI.gpio
 
-import eu.xeli.aquariumPI.Server
-import eu.xeli.jpigpio.{Alert, JPigpio}
 import java.time.Duration
-import java.time.temporal.ChronoUnit
+
+import eu.xeli.jpigpio.{Alert, JPigpio}
 
 class Listener(pigpio: JPigpio, pin: Int, steady: Duration, function: Double => Unit) {
   val alert = new Alert {
